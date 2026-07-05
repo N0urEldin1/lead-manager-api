@@ -65,14 +65,21 @@ async def read_lead(lead_id: int):
     raise HTTPException(status_code=404)
 
 
-@app.post("/leads")
+@app.post("/leads", status_code=201)
 async def create_lead(lead: Lead):
+    # new = {
+    #     "lead_id": randint(100, 200),
+    #     "data": {"name": lead.name,
+    #              "company": lead.company,
+    #              "email": lead.email,
+    #              "status": lead.status}}
+
     new = {
         "lead_id": randint(100, 200),
-        "data": {"name": lead.name,
-                 "company": lead.company,
-                 "email": lead.email,
-                 "status": lead.status}}
+        "name": lead.name,
+        "company": lead.company,
+        "email": lead.email,
+        "status": lead.status}
 
     leads.append(new)
     return {"leads": new}
@@ -84,4 +91,20 @@ async def delete_lead(lead_id: int):
         if lead.get("lead_id") == lead_id:
             leads.pop(i)
             return Response(status_code=204)
+    raise HTTPException(status_code=404)
+
+
+@app.put("/leads/{lead_id}")
+async def update_lead(lead_id: int, lead: Lead):
+    updated = {
+        "lead_id": lead_id,
+        "name": lead.name,
+        "company": lead.company,
+        "email": lead.email,
+        "status": lead.status}
+
+    for i, lead in enumerate(leads):
+        if lead.get("lead_id") == lead_id:
+            leads[i] = updated
+            return {"leads": updated}
     raise HTTPException(status_code=404)
