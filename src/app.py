@@ -3,11 +3,10 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from src.lead import *
 from src.db import *
-from random import randint
 
 from src.db import *
 
-# start "project 2 scope.txt"
+# cd programing; start "project 2 scope.txt"
 
 
 @asynccontextmanager
@@ -45,45 +44,36 @@ async def read_lead(lead_id: int, session: SessionDep):
     return {"data": data}
 
 
-@app.post("/leads", status_code=201)
-async def create_lead(lead: Lead, session: SessionDep):
+@app.post("/leads", status_code=201, response_model=Response[Lead])
+async def create_lead(lead: LeadCreate, session: SessionDep):
+    db_lead = Lead.model_validate(lead)
 
-    new = {
-        "lead_id": randint(100, 200),
-        "name": lead.name,
-        "company": lead.company,
-        "email": lead.email,
-        "status": lead.status}
+    session.add(db_lead)
+    session.commit()
+    session.refresh(db_lead)
+    return {"data": db_lead}
 
-    new = session.add_all(Lead(
-        lead_id=1, name="Ali", company="Tesla", email="ali@tesla.com", status="New lead"))
+
+@app.delete("/leads/{lead_id}", status_code=204)
+async def delete_lead(lead_id: int, session: SessionDep):
+    data = session.get(Lead, lead_id)
+    if not data:
+        raise HTTPException(status_code=404)
+    session.delete(data)
     session.commit()
 
-    return {"leads": new}
 
-
-# @app.delete("/leads/{lead_id}")
-# async def delete_lead(lead_id: int, session: SessionDep):
-#     data = session.exec(select(Lead)).all()
-#     for i, lead in enumerate(data):
-#         if lead.get("lead_id") == lead_id:
-#             data.pop(i)
-#             return Response(status_code=204)
-#     raise HTTPException(status_code=404)
-
-
-# @app.put("/leads/{lead_id}")
-# async def update_lead(lead_id: int, lead: Lead, session: SessionDep):
-#     data = session.exec(select(Lead)).all()
-#     updated = {
-#         "lead_id": lead_id,
-#         "name": lead.name,
-#         "company": lead.company,
-#         "email": lead.email,
-#         "status": lead.status}
-
-#     for i, lead in enumerate(data):
-#         if lead.get("lead_id") == lead_id:
-#             data[i] = updated
-#             return {"leads": updated}
-#     raise HTTPException(status_code=404)
+@app.put("/leads/{lead_id}", response_model=Response[Lead])
+async def update_lead(lead_id: int, lead: LeadCreate, session: SessionDep):
+    data = session.get(Lead, lead_id)
+    if not data:
+        raise HTTPException(status_code=404)
+    data.lead_id = lead.lead_id
+    data.name = lead.name
+    data.company = data.company
+    data.email = lead.email
+    data.status = lead.status
+    session.add(data)
+    session.commit()
+    session.refresh(data)
+    return {"data": data}
