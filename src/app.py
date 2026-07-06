@@ -1,29 +1,18 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, HTTPException, Response
 from src.lead import Lead
 from random import randint
 
-app = FastAPI(root_path="/api/v1")
+from src.db import *
 
-# leads = [{"lead_id": 1, "data": {"name": "Ali", "company": "Tesla", "email": "ali@gmail.com", "status": "status"}},
-#          {"lead_id": 2, "data": {"name": "Ahmed", "company": "Apple",
-#                                  "email": "email", "status": "status"}},
-#          {"lead_id": 3, "data": {"name": "Mohamed", "company": "PayPal",
-#                                  "email": "email", "status": "status"}},
-#          {"lead_id": 4, "data": {"name": "Nour", "company": "FastAPI",
-#                                  "email": "email", "status": "status"}},
-#          {"lead_id": 5, "data": {"name": "Omar", "company": "Instagram",
-#                                  "email": "email", "status": "status"}},
-#          {"lead_id": 6, "data": {"name": "Ola", "company": "Facebook",
-#                                  "email": "email", "status": "status"}},
-#          {"lead_id": 7, "data": {"name": "Hagar", "company": "YouTube",
-#                                  "email": "email", "status": "status"}},
-#          {"lead_id": 8, "data": {"name": "Jack", "company": "Reddit",
-#                                  "email": "email", "status": "status"}},
-#          {"lead_id": 9, "data": {"name": "Joe", "company": "Mojang",
-#                                  "email": "email", "status": "status"}},
-#          {"lead_id": 10, "data": {"name": "Othman", "company": "Stripe",
-#                                   "email": "email", "status": "status"}},
-#          ]
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    create_db_and_tables()
+    yield
+
+app = FastAPI(root_path="/api/v1", lifespan=lifespan)
 
 leads = [{"lead_id": 1, "name": "Ali", "company": "Tesla", "email": "ali@gmail.com", "status": "status"},
          {"lead_id": 2, "name": "Ahmed", "company": "Apple",
