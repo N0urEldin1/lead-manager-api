@@ -3,14 +3,6 @@ from sqlmodel import Field, Session, SQLModel, create_engine, select
 from typing import Annotated
 
 
-class Hero(SQLModel, table=True):
-    lead_id: int | None = Field(default=None, primary_key=True)
-    name: str = Field(index=True)
-    company: int | None = Field(default=None)
-    email: str
-    status: str
-
-
 sqlite_file_name = "database.db"
 sqlite_url = f"sqlite:///{sqlite_file_name}"
 
