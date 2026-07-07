@@ -30,9 +30,25 @@ async def root():
     return "Welcome to the Lead Manager API!"
 
 
+# @app.get("/leads", response_model=Response[list[Lead]])
+# async def read_leads(session: SessionDep, status: str | None = None):
+#     if status is not None:
+#         statement = select(Lead).where(Lead.status == status)
+#         results = session.exec(statement)
+#         return {"data": results}
+#     data = session.exec(select(Lead)).all()
+#     return {"data": data}
+
 @app.get("/leads", response_model=Response[list[Lead]])
-async def read_leads(session: SessionDep):
-    data = session.exec(select(Lead)).all()
+async def read_leads(session: SessionDep, name: str | None = None, company: str | None = None, status: str | None = None):
+    statement = select(Lead)
+    if name is not None:
+        statement = statement.where(Lead.name == name)
+    if company is not None:
+        statement = statement.where(Lead.company == company)
+    if status is not None:
+        statement = statement.where(Lead.status == status)
+    data = session.exec(statement).all()
     return {"data": data}
 
 
