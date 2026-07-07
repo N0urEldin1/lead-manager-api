@@ -1,8 +1,10 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
-from src.lead import Lead, LeadCreate, LeadUpdate, Response
+from src.lead import Lead, LeadCreate, LeadUpdate, LeadPatch, Response
 from src.db import create_db_and_tables, engine, Session, select, SessionDep
+
+from fastapi.encoders import jsonable_encoder
 
 # cd programing; start "project 2 scope.txt"
 
@@ -74,3 +76,28 @@ async def update_lead(lead_id: int, lead: LeadUpdate, session: SessionDep):
     session.commit()
     session.refresh(data)
     return {"data": data}
+
+
+@app.patch("/leads/{lead_id}", response_model=Response[Lead])
+async def update_lead(lead_id: int, lead: LeadPatch, session: SessionDep):
+    data = session.get(Lead, lead_id)
+    if not data:
+        raise HTTPException(status_code=404)
+    new_data = lead.model_dump(exclude_unset=True)
+    print(new_data)
+    for key, value in new_data.items():
+        setattr(data, key, value)
+    session.add(data)
+    session.commit()
+    session.refresh(data)
+    return {"data": data}
+
+    # for key in new_data:
+    #     if key == "name":
+    #         data.name = lead.name
+    #     elif key == "company":
+    #         data.company = lead.company
+    #     elif key == "email":
+    #         data.email = lead.email
+    #     elif key == "status":
+    #         data.status = lead.status

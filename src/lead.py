@@ -31,3 +31,10 @@ class LeadUpdate(SQLModel):
     company: str
     email: str
     status: str
+
+
+class LeadPatch(SQLModel):
+    name: str | None = Field(default=None)
+    company: str | None = Field(default=None)
+    email: str | None = Field(default=None)
+    status: str | None = Field(default=None)
