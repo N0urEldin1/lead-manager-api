@@ -2,8 +2,6 @@ from pydantic import BaseModel
 from sqlmodel import Field, SQLModel
 from typing import Generic, TypeVar
 
-Base = BaseModel
-
 
 class Lead(SQLModel, table=True):
     lead_id: int | None = Field(default=None, primary_key=True)
@@ -22,6 +20,13 @@ class Response(BaseModel, Generic[T]):
 
 class LeadCreate(SQLModel):
     lead_id: int | None
+    name: str
+    company: str
+    email: str
+    status: str
+
+
+class LeadUpdate(SQLModel):
     name: str
     company: str
     email: str

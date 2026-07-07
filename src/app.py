@@ -1,10 +1,8 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
-from src.lead import *
-from src.db import *
-
-from src.db import *
+from src.lead import Lead, LeadCreate, LeadUpdate, Response
+from src.db import create_db_and_tables, engine, Session, select, SessionDep
 
 # cd programing; start "project 2 scope.txt"
 
@@ -64,13 +62,12 @@ async def delete_lead(lead_id: int, session: SessionDep):
 
 
 @app.put("/leads/{lead_id}", response_model=Response[Lead])
-async def update_lead(lead_id: int, lead: LeadCreate, session: SessionDep):
+async def update_lead(lead_id: int, lead: LeadUpdate, session: SessionDep):
     data = session.get(Lead, lead_id)
     if not data:
         raise HTTPException(status_code=404)
-    data.lead_id = lead.lead_id
     data.name = lead.name
-    data.company = data.company
+    data.company = lead.company
     data.email = lead.email
     data.status = lead.status
     session.add(data)
