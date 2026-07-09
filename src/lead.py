@@ -28,7 +28,6 @@ class Response(BaseModel, Generic[T]):
 
 
 class LeadCreate(SQLModel):
-    lead_id: int | None
     name: str
     company: str
     email: str
