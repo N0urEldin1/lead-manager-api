@@ -2,9 +2,10 @@
 from contextlib import asynccontextmanager
 
 # Use the fastapi module (From the FastAPI lib) to import the FastAPI class (that inherits from Starlette) to provides the API functionality alongside the HTTPException class to handle returning HTTP errors
-from fastapi import FastAPI, HTTPException
-from src.lead import Lead, LeadCreate, LeadUpdate, LeadPatch, Response
+from fastapi import FastAPI, HTTPException, Query, Request
+from src.lead import Lead, LeadCreate, LeadUpdate, LeadPatch, Response, PaginatedResponse
 from src.db import create_db_and_tables, engine, Session, select, SessionDep
+from sqlmodel import func
 
 from fastapi.encoders import jsonable_encoder
 
@@ -38,18 +39,56 @@ app = FastAPI(root_path="/api/v1", lifespan=lifespan)
 async def root():
     return "Welcome to the Lead Manager API!"
 
+# Create a GET endpoint to get all leads form the database
 
-@app.get("/leads", response_model=Response[list[Lead]])
-async def read_leads(session: SessionDep, name: str | None = None, company: str | None = None, status: str | None = None):
+
+@app.get("/leads", response_model=PaginatedResponse[list[Lead]])
+# Pass the request parameter to access the request url, the session dependency, the name, company, and status as query parameters to handle filtering
+# Pass the page and page size query parameter and use the Query function to set a default and validation
+async def read_leads(request: Request, session: SessionDep, name: str | None = None, company: str | None = None, status: str | None = None, page: int = Query(1, ge=1), page_size: int = Query(10, ge=5)):
+
+    # Initialize the query by selecting the table model
     statement = select(Lead)
+
+    # Handle validation and add 'where's to the query if provided
     if name is not None:
         statement = statement.where(Lead.name == name)
     if company is not None:
         statement = statement.where(Lead.company == company)
     if status is not None:
         statement = statement.where(Lead.status == status)
-    data = session.exec(statement).all()
-    return {"data": data}
+
+    # Calculate the offset the multiplying the number of previous pages (pages to skip) by the number of items per page
+    offset = (page - 1) * page_size
+    # Fetch the matching data
+    data = session.exec(statement.order_by(
+        Lead.lead_id).offset(offset).limit(page_size)).all()
+
+    # Create a base url for creating the next and previous page urls
+    base_url = str(request.url).split("?")[0]
+
+    # If the number of returned data is less then the page size asked for (meaning there's less data to return than asked for) don't return a url for next page
+    if page_size > len(data):
+        next_url = None
+    else:
+        next_url = f"{base_url}?page={page+1}&page_size={page_size}"
+
+    # Only return a url for the previous page if the use is on page 2 or higher
+    if page > 1:
+        prev_url = f"{base_url}?page={page-1}&page_size={page_size}"
+    else:
+        prev_url = None
+
+    return {
+        "data": data,
+        "pagination": {
+            "page": page,
+            "Page_size": page_size,
+            "item_count": len(data),
+        },
+        "next_page": next_url,
+        "previous_page": prev_url
+    }
 
 
 @app.get("/leads/{lead_id}", response_model=Response[Lead])
