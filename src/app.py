@@ -10,7 +10,14 @@ from sqlmodel import func
 from fastapi.encoders import jsonable_encoder
 
 
+def error():
+    status_code = 404
+    raise HTTPException(status_code=status_code, detail={
+        "status_code": status_code, "error_details": "Item does not exist"})
+
 # Use the async context manager decorator to turn the lifespan generator function into an asynchronous context manager so the lifespan function will run on startup and close on shutdown
+
+
 @asynccontextmanager
 # generator function turned into asynchronous generator function
 # Use this asynchronous generator function to handle FastAPI lifespan (creating the database and table and database seeding on startup and handle shutdown)
@@ -95,7 +102,7 @@ async def read_leads(request: Request, session: SessionDep, name: str | None = N
 async def read_lead(lead_id: int, session: SessionDep):
     data = session.get(Lead, lead_id)
     if not data:
-        raise HTTPException(status_code=404)
+        error()
     return {"data": data}
 
 
@@ -113,7 +120,7 @@ async def create_lead(lead: LeadCreate, session: SessionDep):
 async def delete_lead(lead_id: int, session: SessionDep):
     data = session.get(Lead, lead_id)
     if not data:
-        raise HTTPException(status_code=404)
+        error()
     session.delete(data)
     session.commit()
 
@@ -122,7 +129,7 @@ async def delete_lead(lead_id: int, session: SessionDep):
 async def update_lead(lead_id: int, lead: LeadUpdate, session: SessionDep):
     data = session.get(Lead, lead_id)
     if not data:
-        raise HTTPException(status_code=404)
+        error()
     data.name = lead.name
     data.company = lead.company
     data.email = lead.email
@@ -137,7 +144,7 @@ async def update_lead(lead_id: int, lead: LeadUpdate, session: SessionDep):
 async def update_lead(lead_id: int, lead: LeadPatch, session: SessionDep):
     data = session.get(Lead, lead_id)
     if not data:
-        raise HTTPException(status_code=404)
+        error()
     new_data = lead.model_dump(exclude_unset=True)
     print(new_data)
     for key, value in new_data.items():
