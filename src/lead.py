@@ -1,61 +1,61 @@
-from pydantic import BaseModel
 from sqlmodel import Field, SQLModel
-from typing import Generic, TypeVar, Any
-
-# Create a class the inherits form SQLModel and set table to True to create a Table model
-# Inheriting from the class SQLModel and passing (table=True) will register the created(child) class in it's metadata attribute
 
 
-class Lead(SQLModel, table=True):
+# Create a base data model using SQLModel with out setting table to true
+class LeadBase(SQLModel):
+    name: str
+    company: str
+    email: str
+    status: str
+
+# Create a data model with lead_id set to int only (without | None) to be used as a response model that indicate we always return a lead is
+
+
+class LeadPublic(LeadBase):
+    lead_id: int
+
+# Create a class the inherits form the base data model and set table to True to create a Table model
+# Inheriting from the class LeadBase and passing (table=True) will register the table definition in Lead's metadata attribute to be added to the data base as row
+
+
+class Lead(LeadBase, table=True):
     # Use the Field function from sqlmodel to set arguments for columns
     # Create a lead_id row that could be int or None and set it's default value to None and make it the primary key (The unique identifier of each row in the table)
     # The lead_id column most be defaulted to None so that when you create a new instance of it, you wont assign a value to it to let the database create the id for you
     lead_id: int | None = Field(default=None, primary_key=True, index=True)
-    name: str
-    company: str
-    email: str
-    status: str
 
 
-# Create a generic type hint to c
-T = TypeVar("T")
+# Create a separate data model using the base model to separate the request model for the data required for creating a lead (future proofing)
+class LeadCreate(LeadBase):
+    pass
 
 
-class Response(BaseModel, Generic[T]):
-    data: T
+# Create a separate data model using the base model to separate the request model for the data required for updating a lead (future proofing)
 
-# Create a class the inherits form SQLModel and do not set table to True to create a Data model
-
-
-class LeadCreate(SQLModel):
-    name: str
-    company: str
-    email: str
-    status: str
-
-# Create another data model
+class LeadUpdate(LeadBase):
+    pass
 
 
-class LeadUpdate(SQLModel):
-    name: str
-    company: str
-    email: str
-    status: str
-
-# Create another data model
-
-
+# Create a separate data model to be a request model and set every type to be optional to allow users to update only the data they want
 class LeadPatch(SQLModel):
     name: str | None = Field(default=None)
     company: str | None = Field(default=None)
     email: str | None = Field(default=None)
     status: str | None = Field(default=None)
 
-# Create a response model to handel returning the pagination data
+
+# Create a data model for the pagination data response
+class PaginationData(SQLModel):
+    page: str
+    page_size: str
+    item_count: str
 
 
-class PaginatedResponse(BaseModel, Generic[T]):
-    data: T
-    pagination: dict[str, Any]
-    next_page: str | None = Field(default=None)
-    previous_page: str | None = Field(default=None)
+# Create a data model to be used as the response model for requesting paginated data
+# Set data to inherit from the base model to represent the lead data
+# # Set pagination to inherit from pagination data to represent the page, page_size, and item_count data
+class PaginatedResponse(SQLModel):
+    data: list[LeadPublic]
+    pagination: PaginationData
+    next_page: str | None
+    previous_page: str | None

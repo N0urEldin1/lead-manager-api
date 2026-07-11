@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 
 # Use the fastapi module (From the FastAPI lib) to import the FastAPI class (that inherits from Starlette) to provides the API functionality alongside the HTTPException class to handle returning HTTP errors
 from fastapi import FastAPI, HTTPException, Query, Request
-from src.lead import Lead, LeadCreate, LeadUpdate, LeadPatch, Response, PaginatedResponse
+from src.lead import Lead, LeadPublic, LeadCreate, LeadUpdate, LeadPatch, PaginatedResponse
 from src.db import create_db_and_tables, engine, Session, select, SessionDep
 from sqlmodel import func
 
@@ -49,7 +49,7 @@ async def root():
 # Create a GET endpoint to get all leads form the database
 
 
-@app.get("/leads", response_model=PaginatedResponse[list[Lead]])
+@app.get("/leads", response_model=PaginatedResponse)
 # Pass the request parameter to access the request url, the session dependency, the name, company, and status as query parameters to handle filtering
 # Pass the page and page size query parameter and use the Query function to set a default and validation
 async def read_leads(request: Request, session: SessionDep, name: str | None = None, company: str | None = None, status: str | None = None, page: int = Query(1, ge=1), page_size: int = Query(10, ge=5)):
@@ -98,16 +98,18 @@ async def read_leads(request: Request, session: SessionDep, name: str | None = N
     }
 
 
-@app.get("/leads/{lead_id}", response_model=Response[Lead])
+@app.get("/leads/{lead_id}", response_model=LeadPublic)
 async def read_lead(lead_id: int, session: SessionDep):
-    data = session.get(Lead, lead_id)
+    data = session.get(LeadPublic, lead_id)
     if not data:
         error()
     return {"data": data}
 
 
-@app.post("/leads", status_code=201, response_model=Response[Lead])
+@app.post("/leads", status_code=201, response_model=LeadPublic)
+# Use the type annotation LeadCreate (a class in lead.py) to
 async def create_lead(lead: LeadCreate, session: SessionDep):
+    # create an instance of Lead (the table model) using model_validate to pass the lead object (an instance of LeadCreate) to read it's attributes
     db_lead = Lead.model_validate(lead)
 
     session.add(db_lead)
@@ -118,16 +120,16 @@ async def create_lead(lead: LeadCreate, session: SessionDep):
 
 @app.delete("/leads/{lead_id}", status_code=204)
 async def delete_lead(lead_id: int, session: SessionDep):
-    data = session.get(Lead, lead_id)
+    data = session.get(LeadPublic, lead_id)
     if not data:
         error()
     session.delete(data)
     session.commit()
 
 
-@app.put("/leads/{lead_id}", response_model=Response[Lead])
+@app.put("/leads/{lead_id}", response_model=LeadPublic)
 async def update_lead(lead_id: int, lead: LeadUpdate, session: SessionDep):
-    data = session.get(Lead, lead_id)
+    data = session.get(LeadPublic, lead_id)
     if not data:
         error()
     data.name = lead.name
@@ -140,9 +142,9 @@ async def update_lead(lead_id: int, lead: LeadUpdate, session: SessionDep):
     return {"data": data}
 
 
-@app.patch("/leads/{lead_id}", response_model=Response[Lead])
+@app.patch("/leads/{lead_id}", response_model=LeadPublic)
 async def update_lead(lead_id: int, lead: LeadPatch, session: SessionDep):
-    data = session.get(Lead, lead_id)
+    data = session.get(LeadPublic, lead_id)
     if not data:
         error()
     new_data = lead.model_dump(exclude_unset=True)
@@ -153,13 +155,3 @@ async def update_lead(lead_id: int, lead: LeadPatch, session: SessionDep):
     session.commit()
     session.refresh(data)
     return {"data": data}
-
-    # for key in new_data:
-    #     if key == "name":
-    #         data.name = lead.name
-    #     elif key == "company":
-    #         data.company = lead.company
-    #     elif key == "email":
-    #         data.email = lead.email
-    #     elif key == "status":
-    #         data.status = lead.status
