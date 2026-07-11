@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Query, Request
 from src.lead import Lead, LeadPublic, LeadCreate, LeadUpdate, LeadPatch, PaginatedResponse
 from src.db import create_db_and_tables, engine, Session, select, SessionDep
+from src.user import UserDep
 from sqlmodel import func
 
 from fastapi.encoders import jsonable_encoder
@@ -40,6 +41,11 @@ async def lifespan(app: FastAPI):
 
 # Create an app object that's instance of FastAPI with a predefined root path and set it's lifespan parameter to use the lifespan function on startup and shutdown
 app = FastAPI(root_path="/api/v1", lifespan=lifespan)
+
+
+@app.get("/users/me")
+async def get_current_user(current_user: UserDep):
+    return current_user
 
 
 @app.get("/")
