@@ -1,4 +1,5 @@
 from sqlmodel import Field, SQLModel
+from typing import Any
 
 
 # Create a base data model using SQLModel with out setting table to true
@@ -46,9 +47,9 @@ class LeadPatch(SQLModel):
 
 # Create a data model for the pagination data response
 class PaginationData(SQLModel):
-    page: str
-    page_size: str
-    item_count: str
+    page: int
+    page_size: int
+    item_count: int
 
 
 # Create a data model to be used as the response model for requesting paginated data
@@ -56,6 +57,6 @@ class PaginationData(SQLModel):
 # # Set pagination to inherit from pagination data to represent the page, page_size, and item_count data
 class PaginatedResponse(SQLModel):
     data: list[LeadPublic]
-    pagination: PaginationData
-    next_page: str | None
-    previous_page: str | None
+    pagination: dict[str, Any]
+    next_page: str | None = Field(default=None)
+    previous_page: str | None = Field(default=None)
