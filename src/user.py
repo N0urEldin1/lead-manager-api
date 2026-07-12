@@ -2,7 +2,7 @@ from typing import Annotated
 
 from pydantic import BaseModel
 from fastapi import Depends, FastAPI
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
@@ -25,3 +25,5 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
     return user
 
 UserDep = Annotated[User, Depends(get_current_user)]
+
+TokenDep = Annotated[str, Depends(oauth2_scheme)]
