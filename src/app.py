@@ -6,7 +6,7 @@ from typing import Annotated
 from fastapi import Depends, FastAPI, HTTPException, Query, Request, status
 from src.lead import Lead, LeadPublic, LeadCreate, LeadUpdate, LeadPatch, PaginatedResponse
 from src.db import create_db_and_tables, engine, Session, select, SessionDep
-from src.user import User, UserDep, TokenDep, FormDep, fake_users_db, UserInDB, fake_hash_password, fake_decode_token
+from src.user import User, TokenDep, FormDep, fake_users_db, UserInDB, fake_hash_password, fake_decode_token  # UserDep,
 from sqlmodel import func
 
 from fastapi.encoders import jsonable_encoder
