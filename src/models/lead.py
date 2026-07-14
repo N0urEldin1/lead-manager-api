@@ -2,18 +2,16 @@ from sqlmodel import Field, SQLModel
 from typing import Any
 
 
-# Create a base data model using SQLModel with out setting table to true
-class LeadBase(SQLModel):
+class LeadBase(SQLModel):  # Create a base data model using SQLModel with out setting table to true
     name: str
     company: str
     email: str
     status: str
 
-# Create a data model with lead_id set to int only (without | None) to be used as a response model that indicate we always return a lead is
 
-
-class LeadPublic(LeadBase):
+class LeadPublic(LeadBase):  # Create a data model with lead_id set to int only (without | None) to be used as a response model that indicate we always return a lead is
     lead_id: int
+
 
 # Create a class the inherits form the base data model and set table to True to create a Table model
 # Inheriting from the class LeadBase and passing (table=True) will register the table definition in Lead's metadata attribute to be added to the data base as row
@@ -26,14 +24,11 @@ class Lead(LeadBase, table=True):
     lead_id: int | None = Field(default=None, primary_key=True, index=True)
 
 
-# Create a separate data model using the base model to separate the request model for the data required for creating a lead (future proofing)
-class LeadCreate(LeadBase):
+class LeadCreate(LeadBase):  # Create a separate data model using the base model to separate the request model for the data required for creating a lead (future proofing)
     pass
 
 
-# Create a separate data model using the base model to separate the request model for the data required for updating a lead (future proofing)
-
-class LeadUpdate(LeadBase):
+class LeadUpdate(LeadBase):  # Create a separate data model using the base model to separate the request model for the data required for updating a lead (future proofing)
     pass
 
 

@@ -2,11 +2,12 @@ from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
 import jwt
-from pydantic import BaseModel
-from fastapi import Depends, FastAPI, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
 from jwt.exceptions import InvalidTokenError
 from pwdlib import PasswordHash
+
+from src.models.user import TokenData, User, UserInDB
 
 
 SECRET_KEY = "24b695ac2fbe64148a8f79f1b75c08d0feaa8e083b30069221b4202640c123ac"
@@ -25,10 +26,6 @@ fake_users_db = {
 }
 
 
-# def fake_hash_password(password: str):
-#     return "fakehashed" + password
-
-
 password_hash = PasswordHash.recommended()
 
 DUMMY_HASH = password_hash.hash("dummypassword")
@@ -42,26 +39,6 @@ def verify_password(plain_password, hashed_password):
 
 def get_password_hash(password):
     return password_hash.hash(password)
-
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-
-class TokenData(BaseModel):
-    username: str | None = None
-
-
-class User(BaseModel):
-    username: str
-    email: str | None = None
-    full_name: str | None = None
-    disabled: bool | None = None
-
-
-class UserInDB(User):
-    hashed_password: str
 
 
 def get_user(db, username: str):
@@ -91,15 +68,6 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     return encoded_jwt
 
 
-# def fake_decode_token(token):
-#     user = get_user(fake_users_db, token)
-#     return user
-
-
-# async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
-#     user = fake_decode_token(token)
-#     return user
-
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -126,9 +94,3 @@ async def get_current_active_user(
     if current_user.disabled:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
-
-
-UserDep = Annotated[User, Depends(get_current_active_user)]
-TokenDep = Annotated[str, Depends(oauth2_scheme)]
-
-FormDep = Annotated[OAuth2PasswordRequestForm, Depends()]

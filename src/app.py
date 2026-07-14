@@ -9,12 +9,12 @@ from jwt.exceptions import InvalidTokenError
 
 # Use the fastapi module (From the FastAPI lib) to import the FastAPI class (that inherits from Starlette) to provides the API functionality alongside the HTTPException class to handle returning HTTP errors
 from fastapi import Depends, FastAPI, HTTPException, Query, Request, status
-from src.lead import Lead, LeadPublic, LeadCreate, LeadUpdate, LeadPatch, PaginatedResponse
-from src.db import create_db_and_tables, engine, Session, select, SessionDep
-from src.user import ACCESS_TOKEN_EXPIRE_MINUTES, ALGORITHM, SECRET_KEY, Token, TokenData, User, TokenDep, FormDep, UserDep, authenticate_user, create_access_token, fake_users_db, UserInDB, get_user  # UserDep,
-from sqlmodel import func
-
-from fastapi.encoders import jsonable_encoder
+from sqlalchemy import select
+from src.models.lead import Lead, LeadPublic, LeadCreate, LeadUpdate, LeadPatch, PaginatedResponse
+from src.models.user import Token, TokenData, User, UserInDB  # UserDep,
+from src.database.db import create_db_and_tables, engine, Session
+from src.routers.auth import authenticate_user, create_access_token, fake_users_db, get_user, ACCESS_TOKEN_EXPIRE_MINUTES, ALGORITHM, SECRET_KEY
+from dependencies import TokenDep, FormDep, UserDep, SessionDep
 
 
 def error():
@@ -47,11 +47,6 @@ async def lifespan(app: FastAPI):
 
 # Create an app object that's instance of FastAPI with a predefined root path and set it's lifespan parameter to use the lifespan function on startup and shutdown
 app = FastAPI(root_path="/api/v1", lifespan=lifespan)
-
-
-# @app.get("/users/me")
-# async def get_current_user(current_user: UserDep):
-#     return current_user
 
 
 @app.get("/items/")
@@ -215,7 +210,8 @@ async def create_lead(lead: LeadCreate, session: SessionDep):
     session.add(db_lead)
     session.commit()
     session.refresh(db_lead)
-    return {"data": db_lead}
+    return db_lead
+    # return {"data": db_lead}
 
 
 @app.delete("/leads/{lead_id}", status_code=204)
