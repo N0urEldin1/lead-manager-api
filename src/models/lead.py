@@ -1,5 +1,4 @@
 from sqlmodel import Field, SQLModel
-from typing import Any
 
 
 class LeadBase(SQLModel):  # Create a base data model using SQLModel with out setting table to true
@@ -7,10 +6,6 @@ class LeadBase(SQLModel):  # Create a base data model using SQLModel with out se
     company: str
     email: str
     status: str
-
-
-class LeadPublic(LeadBase):  # Create a data model with lead_id set to int only (without | None) to be used as a response model that indicate we always return a lead is
-    lead_id: int
 
 
 # Create a class the inherits form the base data model and set table to True to create a Table model
@@ -38,20 +33,3 @@ class LeadPatch(SQLModel):
     company: str | None = Field(default=None)
     email: str | None = Field(default=None)
     status: str | None = Field(default=None)
-
-
-# Create a data model for the pagination data response
-class PaginationData(SQLModel):
-    page: int
-    page_size: int
-    item_count: int
-
-
-# Create a data model to be used as the response model for requesting paginated data
-# Set data to inherit from the base model to represent the lead data
-# # Set pagination to inherit from pagination data to represent the page, page_size, and item_count data
-class PaginatedResponse(SQLModel):
-    data: list[LeadPublic]
-    pagination: dict[str, Any]
-    next_page: str | None = Field(default=None)
-    previous_page: str | None = Field(default=None)

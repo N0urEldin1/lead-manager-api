@@ -7,12 +7,13 @@ from fastapi.security import OAuth2PasswordBearer
 from jwt.exceptions import InvalidTokenError
 from pwdlib import PasswordHash
 
-from src.models.user import TokenData, User, UserInDB
+from src.schemas.user import TokenData, UserInDB, User
 
+from config import settings
 
-SECRET_KEY = "24b695ac2fbe64148a8f79f1b75c08d0feaa8e083b30069221b4202640c123ac"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+SECRET_KEY = settings.SECRET_KEY
+ALGORITHM = settings.ALGORITHM
+ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
 
 
 fake_users_db = {
