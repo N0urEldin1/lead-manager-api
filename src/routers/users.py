@@ -18,9 +18,9 @@ async def read_items(token: TokenDep):
 # Create a POST endpoint at the path "/token" that the user will use to login by sending the username and password in the request body.
 @router.post("/token")
 # Create a function called login_for_access_token that will receive the form_data dependency (which is an instance of OAuth2PasswordRequestForm used to get the form data from the request body) and return a Token object (which is an instance of the Token class) that will be created by the login function from the user_services module.
-async def login_for_access_token(form_data: FormDep) -> Token:
+async def login_for_access_token(form_data: FormDep, session: SessionDep) -> Token:
     # Use the login function the return a a token for the use to store for later interactions with the API.
-    return user_services.login(form_data)
+    return user_services.login(form_data, session)
 
 
 # Create a POST endpoint at the path "/register" that the user will use to register by sending their details in the request body.

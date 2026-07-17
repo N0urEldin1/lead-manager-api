@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
-from sqlalchemy import select
+from sqlmodel import select
 
 
 import jwt
@@ -57,25 +57,20 @@ def get_user(db, username: str):
 
 
 def get_user_from_db(user, session: SessionDep):
-    db_user = session.exec(select(User).where(
-        User.username == user.username)).first()
-    print(db_user)
+    db_user = session.exec(select(User).where(User.username == user)).first()
     return db_user
-
-# def get_user_from_db(session: SessionDep, username: str) -> User | None:
-#     return session.exec(
-#         select(User).where(User.username == username)
-#     ).first()
 
 
 # Create a function called authenticate_user that will receive the fake_db, username, and password as arguments to pass them to the get_user function.
-def authenticate_user(fake_db, username: str, password: str):
+def authenticate_user(username, password, session):
     # Create a user object by calling the get_user function and passing the fake_db and username as arguments. The get_user function will check if the user exists in the fake_db and return a user object if it does, otherwise it will return False.
-    user = get_user(fake_db, username)
+    user = get_user_from_db(username, session)
+
     # If the user does not exist, verify the password against a dummy hash to mitigate timing attacks and return False.
     if not user:
         verify_password(password, DUMMY_HASH)
         return False
+
     # If the user exists, verify the password against the hashed password stored in the user object. If the password is incorrect, return False.
     if not verify_password(password, user.hashed_password):
         return False

@@ -9,15 +9,16 @@ from src.schemas.user import Token
 
 
 # Create a function called login that will receive the form_data from the function login_for_access_token at the path "/token" and return a Token object (which is an instance of the Token class)
-def login(form_data):
+def login(form_data, session):
     # Create a user object by calling the authenticate_user function from the security module passing the fake_users_db, form_data.username, and form_data.password as arguments. The authenticate_user function use the get user function to check if the user exists in the fake_users_db and if the password is correct.
-    # user = session.exec(select(User).where(
-    #     User.username == user.username)).first()
 
-    user = authenticate_user(
-        fake_users_db, form_data.username, form_data.password)
+    # user = authenticate_user(
+    #     fake_users_db, form_data.username, form_data.password)
 
-    if not user:
+    auth_user = authenticate_user(
+        form_data.username, form_data.password, session)
+
+    if not auth_user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
@@ -28,7 +29,7 @@ def login(form_data):
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     # Create the access_token object by passing the user data as a dictionary with "sub" as the key and the username as the value to create_access_token's attribute "data" and the access_token_expires object to the expires_delta attribute
     access_token = create_access_token(
-        data={"sub": user.username}, expires_delta=access_token_expires
+        data={"sub": auth_user.username}, expires_delta=access_token_expires
     )
     # Return an instance on the Token class with the access_token attribute set to the newly created access token and the token_type set to "bearer"
     return Token(access_token=access_token, token_type="bearer")
@@ -40,7 +41,7 @@ def register(user, session):  # form_data,
     # From fake_users_db
     # existing_user = get_user(fake_users_db, user.username)
 
-    existing_user = get_user_from_db(user, session)
+    existing_user = get_user_from_db(user.username, session)
 
     if existing_user:
         raise HTTPException(
