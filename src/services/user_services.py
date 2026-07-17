@@ -4,6 +4,7 @@ from fastapi import HTTPException, status
 import jwt
 
 from src.auth.security import ACCESS_TOKEN_EXPIRE_MINUTES, ALGORITHM, SECRET_KEY, authenticate_user, create_access_token, get_user, fake_users_db
+from src.dependencies.auth import TokenDep
 from src.schemas.user import Token, TokenData
 
 
@@ -25,6 +26,10 @@ def get_current(token):
     if user is None:
         raise credentials_exception
     return user
+
+
+async def get_current_user(token: TokenDep):
+    return get_current(token)
 
 
 def login(form_data):

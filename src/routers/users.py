@@ -12,10 +12,6 @@ async def read_items(token: TokenDep):
     return {"token": token}
 
 
-async def get_current_user(token: TokenDep):
-    return user_services.get_current(token)
-
-
 @router.post("/token")
 async def login_for_access_token(form_data: FormDep) -> Token:
     return user_services.login(form_data)
