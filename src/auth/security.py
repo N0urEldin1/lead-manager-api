@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
+from sqlalchemy import select
+
 
 import jwt
 from fastapi import Depends, HTTPException, status
@@ -7,7 +9,9 @@ from fastapi.security import OAuth2PasswordBearer
 from jwt.exceptions import InvalidTokenError
 from pwdlib import PasswordHash
 
-from src.schemas.user import TokenData, UserInDB, User
+from src.dependencies.database import SessionDep
+from src.schemas.user import TokenData, UserInDB
+from src.models.user import User
 
 from config import settings
 
@@ -50,6 +54,18 @@ def get_user(db, username: str):
         user_dict = db[username]
         # Use the UserInDB class to create a user object by unpacking the user dictionary using the ** operator and passing it to the UserInDB class. The ** operator will unpack the dictionary and pass the key-value pairs as keyword arguments to the UserInDB class.
         return UserInDB(**user_dict)
+
+
+def get_user_from_db(user, session: SessionDep):
+    db_user = session.exec(select(User).where(
+        User.username == user.username)).first()
+    print(db_user)
+    return db_user
+
+# def get_user_from_db(session: SessionDep, username: str) -> User | None:
+#     return session.exec(
+#         select(User).where(User.username == username)
+#     ).first()
 
 
 # Create a function called authenticate_user that will receive the fake_db, username, and password as arguments to pass them to the get_user function.

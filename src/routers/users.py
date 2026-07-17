@@ -2,7 +2,9 @@
 from fastapi import APIRouter
 
 from src.dependencies.auth import FormDep, TokenDep, UserDep
-from src.schemas.user import Token, User, UserInDB
+from src.dependencies.database import SessionDep
+from src.models.user import UserRegister
+from src.schemas.user import Token, User
 from src.services import user_services
 router = APIRouter()
 
@@ -19,6 +21,13 @@ async def read_items(token: TokenDep):
 async def login_for_access_token(form_data: FormDep) -> Token:
     # Use the login function the return a a token for the use to store for later interactions with the API.
     return user_services.login(form_data)
+
+
+# Create a POST endpoint at the path "/register" that the user will use to register by sending their details in the request body.
+@router.post("/register", status_code=201, response_model=Token)
+# form_data: FormDep,
+async def register_user(user: UserRegister, session: SessionDep) -> Token:
+    return user_services.register(user, session)  # form_data,
 
 
 # Create a GET endpoint at the path "/users/me/" that the user will use to get their credentials

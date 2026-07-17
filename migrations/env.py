@@ -7,7 +7,7 @@ from pathlib import Path
 
 from alembic import context
 
-from src.models import lead  # user
+from src.models import lead, user
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

@@ -9,6 +9,7 @@ htmlcov/
 # Virtual environments
 .venv/
 
+migrations/env.py
 
 # Environment variables
 env/
