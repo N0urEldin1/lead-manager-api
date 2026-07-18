@@ -6,7 +6,6 @@ from src.dependencies.auth import UserDep
 
 from src.models.lead import Lead, LeadCreate, LeadPatch, LeadUpdate
 from src.schemas.lead import LeadResponse, PaginatedPublic, LeadPublic
-from src.utils.http404 import error
 from src.services import lead_services
 
 router = APIRouter()

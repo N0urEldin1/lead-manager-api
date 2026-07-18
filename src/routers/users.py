@@ -6,12 +6,15 @@ from src.dependencies.database import SessionDep
 from src.models.user import UserRegister
 from src.schemas.user import Token, User
 from src.services import user_services
+from src.utils.http401_unauth import error_401_unauthorized
 router = APIRouter()
 
 
 # Create a GET endpoint at the path "/items/" that will use the token dependency to access the /token url so the user can access the access token
 @router.get("/items/")
 async def read_items(token: TokenDep):
+    if not token:
+        error_401_unauthorized()
     return {"token": token}
 
 

@@ -2,7 +2,7 @@ from sqlalchemy import select
 from fastapi import Query, Request, APIRouter
 from src.models.lead import Lead, LeadBase
 from src.schemas.lead import LeadPublic
-from src.utils.http404 import error
+from src.utils.http404 import error_404
 
 
 def read_all(user, request, session, name, company, status, page, page_size):
@@ -52,14 +52,15 @@ def read_all(user, request, session, name, company, status, page, page_size):
 
 
 def read(user, lead_id, session):
+    # data = session.get(Lead, lead_id)
 
     statement = select(Lead)
     statement = statement.where(Lead.owner_id == user.user_id)
-
-    # data = session.get(Lead, lead_id)
+    print(statement)
     data = session.scalars(statement.where(Lead.lead_id == lead_id)).first()
+
     if not data:
-        error()
+        error_404()
     return {"data": data}
 
 
@@ -89,7 +90,7 @@ def delete(user, lead_id, session):
     data = session.scalars(statement.where(Lead.lead_id == lead_id)).first()
 
     if not data:
-        error()
+        error_404()
     session.delete(data)
     session.commit()
 
@@ -102,7 +103,7 @@ def update(user, lead_id, lead, session):
     data = session.scalars(statement.where(Lead.lead_id == lead_id)).first()
 
     if not data:
-        error()
+        error_404()
     data.name = lead.name
     data.company = lead.company
     data.email = lead.email
@@ -121,7 +122,7 @@ def patch(user, lead_id, lead, session):
     data = session.scalars(statement.where(Lead.lead_id == lead_id)).first()
 
     if not data:
-        error()
+        error_404()
     new_data = lead.model_dump(exclude_unset=True)
     for key, value in new_data.items():
         setattr(data, key, value)

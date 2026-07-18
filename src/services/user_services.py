@@ -6,6 +6,8 @@ from fastapi import HTTPException, status
 from src.auth.security import ACCESS_TOKEN_EXPIRE_MINUTES, authenticate_user, create_access_token, get_password_hash, get_user_from_db
 from src.models.user import User
 from src.schemas.user import Token
+from src.utils.http401 import error_401
+from src.utils.http400 import error_400
 
 
 # Create a function called login that will receive the form_data from the function login_for_access_token at the path "/token" and return a Token object (which is an instance of the Token class)
@@ -19,11 +21,7 @@ def login(form_data, session):
         form_data.username, form_data.password, session)
 
     if not auth_user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        error_401()
     # If a user exist in the database:
     # Create the access_token_expires object that's an instance of the timedelta class with minutes attribute set to the ACCESS_TOKEN_EXPIRE_MINUTES constant
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -44,10 +42,7 @@ def register(user, session):  # form_data,
     existing_user = get_user_from_db(user.username, session)
 
     if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User already exists",
-        )
+        error_400()
 
     # If the user doesn't exist in the database, create a new user object by adding the new user's data to the fake_users_db dictionary with the username as the key and a dictionary with the user's data as the value. The password will be hashed using the get_password_hash function from the security module.
     hashed_password = get_password_hash(user.password)

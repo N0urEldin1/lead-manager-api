@@ -13,6 +13,10 @@ from src.dependencies.database import SessionDep
 from src.schemas.user import TokenData, UserInDB
 from src.models.user import User
 
+from src.utils.http401 import error_401
+from src.utils.http400_inactive import error_400_inactive
+from src.utils.http401_unauth import error_401_unauthorized
+
 from config import settings
 
 SECRET_KEY = settings.SECRET_KEY
@@ -20,15 +24,15 @@ ALGORITHM = settings.ALGORITHM
 ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
 
 
-fake_users_db = {
-    "johndoe": {
-        "username": "johndoe",
-        "full_name": "John Doe",
-        "email": "johndoe@example.com",
-        "hashed_password": "$argon2id$v=19$m=65536,t=3,p=4$wagCPXjifgvUFBzq4hqe3w$CYaIb8sB+wtD+Vu/P4uod1+Qof8h+1g7bbDlBID48Rc",
-        "disabled": False,
-    }
-}
+# fake_users_db = {
+#     "johndoe": {
+#         "username": "johndoe",
+#         "full_name": "John Doe",
+#         "email": "johndoe@example.com",
+#         "hashed_password": "$argon2id$v=19$m=65536,t=3,p=4$wagCPXjifgvUFBzq4hqe3w$CYaIb8sB+wtD+Vu/P4uod1+Qof8h+1g7bbDlBID48Rc",
+#         "disabled": False,
+#     }
+# }
 
 
 password_hash = PasswordHash.recommended()
@@ -36,7 +40,7 @@ password_hash = PasswordHash.recommended()
 DUMMY_HASH = password_hash.hash("dummypassword")
 
 # Create an instance of OAuth2PasswordBearer (A tool provided from FastAPI to use OAuth2 with the password flow using a bearer token) with the token URL set to "token" (This will just create a url for the user to use to get the access token by sending the token and type bearer in the request's Authorization header).
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token", auto_error=False)
 
 
 def verify_password(plain_password, hashed_password):
@@ -95,12 +99,10 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
 
 
 # Create a function called get_current_user that will get the token from the Token dependency and decode it to get the username from the token to use it to get the username from the database
-async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], session: SessionDep):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
+async def get_current_user(token: Annotated[str | None, Depends(oauth2_scheme)], session: SessionDep):
+    if token is None:
+        error_401_unauthorized()
+    credentials_exception = error_401()
     # try to create a payload object by decoding the token (created on logging in) using the secret decoding key and algorithm
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -123,5 +125,5 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], sessio
 async def get_current_active_user(current_user: Annotated[User, Depends(get_current_user)]):
     # Check if the user state is disabled (set to True)
     if current_user.disabled:
-        raise HTTPException(status_code=400, detail="Inactive user")
+        error_400_inactive()
     return current_user
