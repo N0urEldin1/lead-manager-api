@@ -5,9 +5,10 @@ from src.schemas.lead import LeadPublic
 from src.utils.http404 import error
 
 
-def read_all(request, session, name, company, status, page, page_size):
+def read_all(user, request, session, name, company, status, page, page_size):
     # Initialize the query by selecting the table model
-    statement = select(Lead)
+    # Filter the query to only return leads that belong to the current user
+    statement = select(Lead).where(Lead.owner_id == user.user_id)
 
     # Handle validation and add 'where's to the query if provided
     if name is not None:
@@ -50,16 +51,29 @@ def read_all(request, session, name, company, status, page, page_size):
     }
 
 
-def read(lead_id, session):
-    data = session.get(Lead, lead_id)
+def read(user, lead_id, session):
+
+    statement = select(Lead)
+    statement = statement.where(Lead.owner_id == user.user_id)
+
+    # data = session.get(Lead, lead_id)
+    data = session.scalars(statement.where(Lead.lead_id == lead_id)).first()
     if not data:
         error()
     return {"data": data}
 
 
-def create(lead, session):
+def create(user, lead, session):
     # create an instance of Lead (the table model) using model_validate to pass the lead object (an instance of LeadCreate) to read it's attributes
-    db_lead = Lead.model_validate(lead)
+    # db_lead = Lead.model_validate(lead)
+
+    db_lead = Lead(
+        owner_id=user.user_id,
+        name=lead.name,
+        company=lead.company,
+        email=lead.email,
+        status=lead.status
+    )
 
     session.add(db_lead)
     session.commit()
@@ -67,16 +81,26 @@ def create(lead, session):
     return db_lead
 
 
-def delete(lead_id, session):
-    data = session.get(Lead, lead_id)
+def delete(user, lead_id, session):
+    # data = session.get(Lead, lead_id)
+
+    statement = select(Lead)
+    statement = statement.where(Lead.owner_id == user.user_id)
+    data = session.scalars(statement.where(Lead.lead_id == lead_id)).first()
+
     if not data:
         error()
     session.delete(data)
     session.commit()
 
 
-def update(lead_id, lead, session):
-    data = session.get(Lead, lead_id)
+def update(user, lead_id, lead, session):
+    # data = session.get(Lead, lead_id)
+
+    statement = select(Lead)
+    statement = statement.where(Lead.owner_id == user.user_id)
+    data = session.scalars(statement.where(Lead.lead_id == lead_id)).first()
+
     if not data:
         error()
     data.name = lead.name
@@ -89,8 +113,13 @@ def update(lead_id, lead, session):
     return {"data": data}
 
 
-def patch(lead_id, lead, session):
-    data = session.get(Lead, lead_id)
+def patch(user, lead_id, lead, session):
+    # data = session.get(Lead, lead_id)
+
+    statement = select(Lead)
+    statement = statement.where(Lead.owner_id == user.user_id)
+    data = session.scalars(statement.where(Lead.lead_id == lead_id)).first()
+
     if not data:
         error()
     new_data = lead.model_dump(exclude_unset=True)
