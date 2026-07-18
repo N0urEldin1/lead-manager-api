@@ -3,7 +3,7 @@ from sqlalchemy import select
 
 from fastapi import HTTPException, status
 
-from src.auth.security import ACCESS_TOKEN_EXPIRE_MINUTES, authenticate_user, create_access_token, get_user, fake_users_db, get_password_hash, get_user_from_db
+from src.auth.security import ACCESS_TOKEN_EXPIRE_MINUTES, authenticate_user, create_access_token, get_password_hash, get_user_from_db
 from src.models.user import User
 from src.schemas.user import Token
 

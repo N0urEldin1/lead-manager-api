@@ -47,13 +47,13 @@ def get_password_hash(password):
     return password_hash.hash(password)
 
 
-# Create a function called get_user that will receive the db and username as arguments and return a user object if the user exists in the db, otherwise it will return None.
-def get_user(db, username: str):
-    if username in db:
-        # Create a user object by getting the user dictionary from the db using the username as the key.
-        user_dict = db[username]
-        # Use the UserInDB class to create a user object by unpacking the user dictionary using the ** operator and passing it to the UserInDB class. The ** operator will unpack the dictionary and pass the key-value pairs as keyword arguments to the UserInDB class.
-        return UserInDB(**user_dict)
+# # Create a function called get_user that will receive the db and username as arguments and return a user object if the user exists in the db, otherwise it will return None.
+# def get_user(db, username: str):
+#     if username in db:
+#         # Create a user object by getting the user dictionary from the db using the username as the key.
+#         user_dict = db[username]
+#         # Use the UserInDB class to create a user object by unpacking the user dictionary using the ** operator and passing it to the UserInDB class. The ** operator will unpack the dictionary and pass the key-value pairs as keyword arguments to the UserInDB class.
+#         return UserInDB(**user_dict)
 
 
 def get_user_from_db(user, session: SessionDep):
@@ -95,7 +95,7 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
 
 
 # Create a function called get_current_user that will get the token from the Token dependency and decode it to get the username from the token to use it to get the username from the database
-async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
+async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], session: SessionDep):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -111,7 +111,9 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
         token_data = TokenData(username=username)
     except InvalidTokenError:
         raise credentials_exception
-    user = get_user(fake_users_db, username=token_data.username)
+    username = token_data.username
+    user = get_user_from_db(username, session)
+    # user = get_user(fake_users_db, username=token_data.username)
     if user is None:
         raise credentials_exception
     return user
