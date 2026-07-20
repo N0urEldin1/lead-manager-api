@@ -4,13 +4,13 @@ from sqlmodel import select
 
 
 import jwt
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 from jwt.exceptions import InvalidTokenError
 from pwdlib import PasswordHash
 
 from src.dependencies.database import SessionDep
-from src.schemas.user import TokenData, UserInDB
+from src.schemas.user import TokenData
 from src.models.user import User
 
 from src.utils.http401 import error_401
@@ -22,17 +22,6 @@ from config import settings
 SECRET_KEY = settings.SECRET_KEY
 ALGORITHM = settings.ALGORITHM
 ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
-
-
-# fake_users_db = {
-#     "johndoe": {
-#         "username": "johndoe",
-#         "full_name": "John Doe",
-#         "email": "johndoe@example.com",
-#         "hashed_password": "$argon2id$v=19$m=65536,t=3,p=4$wagCPXjifgvUFBzq4hqe3w$CYaIb8sB+wtD+Vu/P4uod1+Qof8h+1g7bbDlBID48Rc",
-#         "disabled": False,
-#     }
-# }
 
 
 password_hash = PasswordHash.recommended()
@@ -49,15 +38,6 @@ def verify_password(plain_password, hashed_password):
 
 def get_password_hash(password):
     return password_hash.hash(password)
-
-
-# # Create a function called get_user that will receive the db and username as arguments and return a user object if the user exists in the db, otherwise it will return None.
-# def get_user(db, username: str):
-#     if username in db:
-#         # Create a user object by getting the user dictionary from the db using the username as the key.
-#         user_dict = db[username]
-#         # Use the UserInDB class to create a user object by unpacking the user dictionary using the ** operator and passing it to the UserInDB class. The ** operator will unpack the dictionary and pass the key-value pairs as keyword arguments to the UserInDB class.
-#         return UserInDB(**user_dict)
 
 
 def get_user_from_db(user, session: SessionDep):

@@ -1,7 +1,5 @@
 from sqlalchemy import select
-from fastapi import Query, Request, APIRouter
-from src.models.lead import Lead, LeadBase
-from src.schemas.lead import LeadPublic
+from src.models.lead import Lead
 from src.utils.http404 import error_404
 
 

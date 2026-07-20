@@ -15,10 +15,7 @@ class User(UserBase, table=True):
     is_superuser: bool = False
     hashed_password: str
 
-# class UserCreate(UserBase):  # Create a separate data model using the base model to separate the request model for the data required for creating a user (future proofing)
-#     # Create a user_id row that could be int or None and set it's default value to None and make it the primary key (The unique identifier of each row in the table)
-#     # The user_id column most be defaulted to None so that when you create a new instance of it, you wont assign a value to it to let the database create the id for you
-#     hashed_password: str
+# class UserCreate(UserBase):
 
 
 class UserRegister(SQLModel):  # Create a separate data model using the base model to separate the request model for the data required for creating a user (future proofing)

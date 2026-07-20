@@ -1,7 +1,4 @@
 from datetime import timedelta
-from sqlalchemy import select
-
-from fastapi import HTTPException, status
 
 from src.auth.security import ACCESS_TOKEN_EXPIRE_MINUTES, authenticate_user, create_access_token, get_password_hash, get_user_from_db
 from src.models.user import User
@@ -13,10 +10,6 @@ from src.utils.http400 import error_400
 # Create a function called login that will receive the form_data from the function login_for_access_token at the path "/token" and return a Token object (which is an instance of the Token class)
 def login(form_data, session):
     # Create a user object by calling the authenticate_user function from the security module passing the fake_users_db, form_data.username, and form_data.password as arguments. The authenticate_user function use the get user function to check if the user exists in the fake_users_db and if the password is correct.
-
-    # user = authenticate_user(
-    #     fake_users_db, form_data.username, form_data.password)
-
     auth_user = authenticate_user(
         form_data.username, form_data.password, session)
 
@@ -35,10 +28,6 @@ def login(form_data, session):
 
 def register(user, session):  # form_data,
     # Check if the user already exists in the database by calling the get_user function from the security module passing the fake_users_db and form_data.username as arguments. The get_user function will return a user object if the user exists in the database or None if it doesn't.
-
-    # From fake_users_db
-    # existing_user = get_user(fake_users_db, user.username)
-
     existing_user = get_user_from_db(user.username, session)
 
     if existing_user:

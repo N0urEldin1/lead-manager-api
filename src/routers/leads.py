@@ -1,10 +1,9 @@
 from fastapi import Query, Request, APIRouter
-from sqlalchemy import select
 
 from src.dependencies.database import SessionDep
 from src.dependencies.auth import UserDep
 
-from src.models.lead import Lead, LeadCreate, LeadPatch, LeadUpdate
+from src.models.lead import LeadCreate, LeadPatch, LeadUpdate
 from src.schemas.lead import LeadResponse, PaginatedPublic, LeadPublic
 from src.services import lead_services
 
