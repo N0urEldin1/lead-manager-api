@@ -54,7 +54,7 @@ def read(user, lead_id, session):
 
     statement = select(Lead)
     statement = statement.where(Lead.owner_id == user.user_id)
-    print(statement)
+    # print(statement)
     data = session.scalars(statement.where(Lead.lead_id == lead_id)).first()
 
     if not data:
