@@ -1,7 +1,15 @@
 
-
+from datetime import timedelta, datetime, timezone
 from unittest.mock import MagicMock
-from src.auth.security import get_user_from_db, authenticate_user
+
+import jwt
+from src.auth.security import get_user_from_db, authenticate_user, create_access_token
+
+
+from config import settings
+
+SECRET_KEY = settings.SECRET_KEY
+ALGORITHM = settings.ALGORITHM
 
 
 # get_user_from_db()
@@ -89,3 +97,49 @@ def test_authenticate_user_wrong_password_returns_false(mocker):
     assert result is False
     mock_get_user.assert_called_once_with("Ali", session)
     mock_verify.assert_called_once_with("password", user.hashed_password)
+
+
+# create_access_token()
+def test_create_access_token_returns_string():
+
+    data = {"sub": "username"}
+
+    expires_delta = timedelta(30)
+
+    token = create_access_token(data, expires_delta)
+
+    assert isinstance(token, str)
+
+
+def test_create_access_token_preserves_payload():
+
+    data = {"sub": "username"}
+
+    expires_delta = timedelta(30)
+
+    token = create_access_token(data, expires_delta)
+
+    payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+
+    expire = datetime.now(timezone.utc) + expires_delta
+
+    result = expire.timestamp()
+
+    assert payload["exp"] == int(result)
+    assert payload["sub"] == "username"
+
+
+def test_create_access_token_uses_default_expiration():
+
+    data = {"sub": "username"}
+
+    token = create_access_token(data, None)
+
+    payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+
+    expire = datetime.now(timezone.utc) + timedelta(minutes=15)
+
+    result = expire.timestamp()
+
+    assert payload["exp"] == int(result)
+    assert payload["sub"] == "username"
