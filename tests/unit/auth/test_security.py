@@ -1,9 +1,11 @@
-
+from fastapi import HTTPException, status
+from jwt.exceptions import InvalidTokenError
 from datetime import timedelta, datetime, timezone
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import jwt
-from src.auth.security import get_user_from_db, authenticate_user, create_access_token
+import pytest
+from src.auth.security import get_user_from_db, authenticate_user, create_access_token, get_current_user
 
 
 from config import settings
@@ -143,3 +145,91 @@ def test_create_access_token_uses_default_expiration():
 
     assert payload["exp"] == int(result)
     assert payload["sub"] == "username"
+
+
+# get_current_user
+@pytest.mark.asyncio
+async def test_get_current_user_with_no_token():
+
+    token = None
+
+    user = MagicMock()
+    user.username = "user1"
+
+    session = MagicMock()
+    session.exec.return_value.first.return_value = user
+
+    with pytest.raises(HTTPException):
+        result = await get_current_user(token, session)
+
+        assert result.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_get_current_user_with_invalid_token():
+
+    token = MagicMock()
+    token.return_value = "faketoken"
+
+    user = MagicMock()
+    user.username = "user1"
+
+    session = MagicMock()
+    session.exec.return_value.first.return_value = user
+
+    with pytest.raises(HTTPException):
+        result = await get_current_user(token, session)
+
+        assert result.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_get_current_user_does_not_exist():
+
+    token = MagicMock()
+    token.return_value = "faketoken"
+
+    user = MagicMock()
+    user.username = None
+
+    session = MagicMock()
+    session.exec.return_value.first.return_value = user
+
+    with pytest.raises(HTTPException):
+        result = await get_current_user(token, session)
+
+        assert result.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_get_current_user_returns_user(mocker):
+
+    valid_token = create_access_token({"sub": "user1"})
+
+    session = MagicMock()
+
+    mock_db_user = mocker.patch(
+        "src.auth.security.get_user_from_db")
+    mock_db_user.return_value = {
+        "email": None,
+        "full_name": None,
+        "disabled": None,
+        "hashed_password": "fakehashedpassword",
+        "username": "user1",
+        "user_id": 1,
+        "is_superuser": None
+    }
+
+    result = await get_current_user(valid_token, session)
+
+    mock_db_user.assert_called_once_with("user1", session)
+
+    assert result == {
+        "email": None,
+        "full_name": None,
+        "disabled": None,
+        "hashed_password": "fakehashedpassword",
+        "username": "user1",
+        "user_id": 1,
+        "is_superuser": None
+    }
