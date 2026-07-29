@@ -5,10 +5,11 @@ from unittest.mock import MagicMock, patch
 
 import jwt
 import pytest
-from src.auth.security import get_user_from_db, authenticate_user, create_access_token, get_current_user
+from src.auth.security import get_user_from_db, authenticate_user, create_access_token, get_current_user, get_current_active_user
 
 
 from config import settings
+from src.models.user import User
 
 SECRET_KEY = settings.SECRET_KEY
 ALGORITHM = settings.ALGORITHM
@@ -233,3 +234,42 @@ async def test_get_current_user_returns_user(mocker):
         "user_id": 1,
         "is_superuser": None
     }
+
+
+# get_current_active_user
+@pytest.mark.asyncio
+async def test_get_current_active_user_disabled_returns_400():
+
+    current_user = MagicMock()
+    current_user.return_value = {
+        "email": None,
+        "full_name": None,
+        "disabled": True,
+        "hashed_password": "fakehashedpassword",
+        "username": "user1",
+        "user_id": 1,
+        "is_superuser": None
+    }
+
+    with pytest.raises(HTTPException):
+        result = await get_current_active_user(current_user)
+
+        assert result.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_get_current_active_user_returns_user():
+
+    current_user = User(
+        email=None,
+        full_name=None,
+        disabled=False,
+        hashed_password="fakehashedpassword",
+        username="user1",
+        user_id=1,
+        is_superuser=None
+    )
+
+    result = await get_current_active_user(current_user)
+
+    assert result == current_user
