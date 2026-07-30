@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock, patch
 
 from fastapi import HTTPException
+import pytest
 from sqlmodel import select
 
 from src.models.lead import Lead
@@ -347,23 +348,19 @@ def test_read_returns_lead():
     assert result == {"data": data}
 
 
-# def test_read_returns_none_when_not_found():
+def test_read_returns_none_when_not_found():
 
-#     user = MagicMock()
-#     user.user_id = 1
+    user = MagicMock()
+    user.user_id = 1
 
-#     session = MagicMock()
-#     session.scalars.return_value.first.return_value = None
+    session = MagicMock()
+    session.scalars.return_value.first.return_value = None
 
-#     session.side_effect = HTTPException(
-#         status_code=404,
-#         detail="Item does not exist"
-#     )
+    with pytest.raises(HTTPException):
+        result = read(
+            user=user,
+            session=session,
+            lead_id=1
+        )
 
-#     result = read(
-#         user=user,
-#         session=session,
-#         lead_id=1
-#     )
-
-#     assert 'detail="Item does not exist"' in result
+        assert result.status_code == 404
