@@ -5,7 +5,7 @@ import pytest
 from sqlmodel import select
 
 from src.models.lead import Lead, LeadCreate
-from src.services.lead_services import read_all, read, create, delete
+from src.services.lead_services import read_all, read, create, delete, update
 
 
 # read_all
@@ -396,6 +396,7 @@ def test_create_creates_new_lead():
     assert result.email == lead.email
 
 
+# delete
 def test_delete_calls_delete_and_commit_when_found():
 
     user = MagicMock()
@@ -440,3 +441,65 @@ def test_delete_raises_404_when_lead_not_found():
 
     session.delete.assert_not_called()
     session.commit.assert_not_called()
+
+
+# update
+def test_update_updates_lead_data():
+
+    user = MagicMock()
+    user.user_id = 1
+
+    existing_lead = Lead(
+        owner_id=1,
+        name="old name",
+        company="old company",
+        email="old@email.com",
+        status="old status"
+    )
+
+    lead = MagicMock()
+    lead.name = "new name"
+    lead.company = "new company"
+    lead.email = "new@email.com"
+    lead.status = "new status"
+
+    session = MagicMock()
+    session.scalars.return_value.first.return_value = existing_lead
+
+    result = update(
+        user=user,
+        lead_id=1,
+        lead=lead,
+        session=session
+    )
+
+    assert result == {"data": existing_lead}
+    assert existing_lead.name == "new name"
+    assert existing_lead.company == "new company"
+    assert existing_lead.email == "new@email.com"
+    assert existing_lead.status == "new status"
+
+    session.add.assert_called_once_with(existing_lead)
+    session.commit.assert_called_once()
+    session.refresh.assert_called_once_with(existing_lead)
+
+
+def test_update_raises_404_when_lead_not_found():
+
+    user = MagicMock()
+    user.user_id = 1
+
+    session = MagicMock()
+    session.scalars.return_value.first.return_value = None
+
+    with pytest.raises(HTTPException):
+        update(
+            user=user,
+            lead_id=1,
+            lead=MagicMock(),
+            session=session
+        )
+
+    session.add.assert_not_called()
+    session.commit.assert_not_called()
+    session.refresh.assert_not_called()
