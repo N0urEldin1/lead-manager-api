@@ -3,9 +3,8 @@ from fastapi import APIRouter
 
 from src.dependencies.auth import FormDep, TokenDep, UserDep
 from src.dependencies.database import SessionDep
-from src.models.user import UserRegister
+from src.models.user import UserRegister, User
 from src.schemas.user import Token
-from src.models.user import User
 from src.services import user_services
 from src.utils.http401_unauth import error_401_unauthorized
 router = APIRouter()
