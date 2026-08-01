@@ -1,8 +1,8 @@
-"""Add owner_id to the lead table
+"""Initial migration
 
-Revision ID: 552a3890ee95
+Revision ID: 81fe540f1451
 Revises: 
-Create Date: 2026-07-18 06:13:51.070583
+Create Date: 2026-08-01 18:22:53.069149
 
 """
 from typing import Sequence, Union
@@ -13,7 +13,7 @@ import sqlmodel
 
 
 # revision identifiers, used by Alembic.
-revision: str = '552a3890ee95'
+revision: str = '81fe540f1451'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None

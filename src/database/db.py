@@ -1,16 +1,23 @@
 # USe the sqlmodel to imports the SQLModel library to provide the ORM functionality for FastAPI
 from sqlmodel import Session, SQLModel, create_engine
 
+from config import settings
 
 # Create a variable to hold the database filename
-sqlite_file_name = "database.db"
-# Create a variable to create the URL that will be used to connect with the database
-sqlite_url = f"sqlite:///{sqlite_file_name}"
-connect_args = {"check_same_thread": False}
+# sqlite_file_name = "database.db"
 
+
+# Create a variable to create the URL that will be used to connect with the database
+# Old Code:
+# sqlite_url = f"sqlite:///{sqlite_file_name}"
+# connect_args = {"check_same_thread": False}
+
+# Old Code:
 # Create the engine object using the create_engine method from sqlmodel
 # Pass the url you've just created as a parameter
-engine = create_engine(sqlite_url, connect_args=connect_args)
+# engine = create_engine(sqlite_url, connect_args=connect_args)
+
+engine = create_engine(settings.DATABASE_URL)
 
 
 def create_db_and_tables():  # Define a function that when called, will run the create_all method with engine as the parameter to create the database file and the table
