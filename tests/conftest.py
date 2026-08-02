@@ -90,7 +90,37 @@ def test_session():
 
 
 @pytest.fixture
-def client(test_session):
+def fake_current_user():
+    return UserDep(
+        user_id=1,
+        username="testuser",
+        email=None,
+        full_name=None,
+        disabled=False,
+        is_superuser=False,
+        hashed_password="fakehashedpassword"
+    )
+
+
+@pytest.fixture
+def authenticated_client(test_session, fake_current_user):
+    def override_get_session():
+        yield test_session
+
+    def override_get_current_user():
+        return fake_current_user
+
+    app.dependency_overrides[get_current_active_user] = override_get_current_user
+    app.dependency_overrides[get_session] = override_get_session
+
+    with TestClient(app) as client:
+        yield client
+
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def unauthenticated_client(test_session):
     def override_get_session():
         yield test_session
 
