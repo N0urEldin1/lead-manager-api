@@ -7,7 +7,7 @@ from src.dependencies.auth import UserDep, get_current_active_user
 from src.dependencies.database import get_session
 from src.models.lead import Lead
 
-from sqlmodel import SQLModel, Session, create_engine
+from sqlmodel import Session, StaticPool, create_engine
 from config import settings
 
 
@@ -72,7 +72,7 @@ def override_session():
 
 TEST_DATABASE_URL = settings.TEST_DATABASE_URL
 
-engine = create_engine(TEST_DATABASE_URL)
+engine = create_engine(TEST_DATABASE_URL, poolclass=StaticPool)
 
 
 @pytest.fixture
