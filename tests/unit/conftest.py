@@ -7,6 +7,9 @@ from src.dependencies.auth import UserDep, get_current_active_user
 from src.dependencies.database import get_session
 from src.models.lead import Lead
 
+from sqlmodel import SQLModel, Session, create_engine
+from config import settings
+
 
 @pytest.fixture
 def fake_session():
@@ -61,4 +64,39 @@ def override_session():
     session.close()
 
     app.dependency_overrides[get_session] = fake_session
+    app.dependency_overrides.clear()
+
+
+# Fixtures for integration tests
+
+
+TEST_DATABASE_URL = settings.TEST_DATABASE_URL
+
+engine = create_engine(TEST_DATABASE_URL)
+
+
+@pytest.fixture
+def test_session():
+    connection = engine.connect()
+    transaction = connection.begin()
+
+    session = Session(bind=connection)
+
+    yield session
+
+    session.close()
+    transaction.rollback()
+    connection.close()
+
+
+@pytest.fixture
+def client(test_session):
+    def override_get_session():
+        yield test_session
+
+    app.dependency_overrides[get_session] = override_get_session
+
+    with TestClient(app) as client:
+        yield client
+
     app.dependency_overrides.clear()
