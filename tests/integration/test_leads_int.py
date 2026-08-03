@@ -46,3 +46,31 @@ def test_get_leads_return_empty_list_int(authenticated_client, active_auth_heade
         "next_page": None,
         "previous_page": None
     }
+
+
+def test_get_leads_return_one_lead(authenticated_client, active_auth_headers_with_data, fake_current_user_with_data):
+
+    data = fake_current_user_with_data
+
+    response = authenticated_client.get(
+        "/leads", headers=active_auth_headers_with_data)
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "data": [
+            {
+                "name": "Test Lead 1",
+                "company": "Test Company 1",
+                "email": "test1@example.com",
+                "status": "new",
+                "lead_id": data.lead.lead_id
+            }
+        ],
+        "pagination": {
+            "page": 1,
+            "page_size": 10,
+            "item_count": 1,
+        },
+        "next_page": None,
+        "previous_page": None
+    }
