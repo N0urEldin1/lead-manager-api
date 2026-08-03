@@ -11,6 +11,8 @@ from src.models.lead import Lead
 from sqlmodel import Session, StaticPool, create_engine
 from config import settings
 
+from dataclasses import dataclass
+
 
 @pytest.fixture
 def fake_session():
@@ -74,6 +76,12 @@ def override_session():
 TEST_DATABASE_URL = settings.TEST_DATABASE_URL
 
 engine = create_engine(TEST_DATABASE_URL, poolclass=StaticPool)
+
+
+@dataclass
+class TestData:
+    user: UserDep
+    lead: Lead
 
 
 #
@@ -202,3 +210,50 @@ def unauthenticated_client(test_session):
         yield client
 
     app.dependency_overrides.clear()
+
+
+# Fake user with data
+@pytest.fixture
+def fake_current_user_with_data(test_session):
+    user = UserDep(
+        user_id=1,
+        username="testuser",
+        email=None,
+        full_name=None,
+        disabled=False,
+        is_superuser=False,
+        hashed_password="fakehashedpassword"
+    )
+
+    test_session.add(user)
+    test_session.commit()
+    test_session.refresh(user)
+
+    lead1 = Lead(
+        owner_id=user.user_id,
+        name="Test Lead 1",
+        company="Test Company 1",
+        email="test1@example.com",
+        status="new"
+    )
+
+    test_session.add(lead1)
+    test_session.commit()
+    test_session.refresh(lead1)
+
+    return TestData(user=user, lead=lead1)
+
+
+@pytest.fixture
+def active_user_token_with_data(fake_current_user_with_data):
+
+    data = fake_current_user_with_data
+
+    return create_access_token(
+        data={"sub": str(data.user.username)}
+    )
+
+
+@pytest.fixture
+def active_auth_headers_with_data(active_user_token_with_data):
+    return {"Authorization": f"Bearer {active_user_token_with_data}"}
