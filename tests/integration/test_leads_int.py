@@ -16,8 +16,33 @@ def test_get_leads_unauthenticated_returns_401_int(unauthenticated_client):
     assert response.status_code == 401
 
 
-def test_get_leads_authenticated_returns_200_int(authenticated_client):
+def test_get_leads_authenticated_returns_200_int(authenticated_client, active_auth_headers):
 
-    response = authenticated_client.get("/leads")
+    response = authenticated_client.get("/leads", headers=active_auth_headers)
 
     assert response.status_code == 200
+
+
+def test_get_leads_authenticated_inactive_returns_400_int(authenticated_client_inactive, inactive_auth_headers):
+
+    response = authenticated_client_inactive.get(
+        "/leads", headers=inactive_auth_headers)
+
+    assert response.status_code == 400
+
+
+def test_get_leads_return_empty_list_int(authenticated_client, active_auth_headers):
+
+    response = authenticated_client.get("/leads", headers=active_auth_headers)
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "data": [],
+        "pagination": {
+            "page": 1,
+            "page_size": 10,
+            "item_count": 0,
+        },
+        "next_page": None,
+        "previous_page": None
+    }
