@@ -63,7 +63,7 @@ def test_get_leads_return_one_lead(authenticated_client, active_auth_headers_wit
                 "company": "Test Company 1",
                 "email": "test1@example.com",
                 "status": "new",
-                "lead_id": data.lead.lead_id
+                "lead_id": data.lead1.lead_id
             }
         ],
         "pagination": {
