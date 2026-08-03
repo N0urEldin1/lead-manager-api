@@ -3,6 +3,7 @@ from unittest.mock import MagicMock
 from fastapi.testclient import TestClient
 
 from src.app import app
+from src.auth.security import create_access_token
 from src.dependencies.auth import UserDep, get_current_active_user
 from src.dependencies.database import get_session
 from src.models.lead import Lead
@@ -75,6 +76,7 @@ TEST_DATABASE_URL = settings.TEST_DATABASE_URL
 engine = create_engine(TEST_DATABASE_URL, poolclass=StaticPool)
 
 
+#
 @pytest.fixture
 def test_session():
     connection = engine.connect()
@@ -89,9 +91,10 @@ def test_session():
     connection.close()
 
 
+# Authenticated active user fixture
 @pytest.fixture
-def fake_current_user():
-    return UserDep(
+def fake_current_user(test_session):
+    user = UserDep(
         user_id=1,
         username="testuser",
         email=None,
@@ -101,16 +104,75 @@ def fake_current_user():
         hashed_password="fakehashedpassword"
     )
 
+    test_session.add(user)
+    test_session.commit()
+    test_session.refresh(user)
+
+    return user
+
 
 @pytest.fixture
-def authenticated_client(test_session, fake_current_user):
+def active_user_token(fake_current_user):
+    return create_access_token(
+        data={"sub": str(fake_current_user.username)}
+    )
+
+
+@pytest.fixture
+def active_auth_headers(active_user_token):
+    return {"Authorization": f"Bearer {active_user_token}"}
+
+
+@pytest.fixture
+def authenticated_client(test_session):
     def override_get_session():
         yield test_session
 
-    def override_get_current_user():
-        return fake_current_user
+    app.dependency_overrides[get_session] = override_get_session
 
-    app.dependency_overrides[get_current_active_user] = override_get_current_user
+    with TestClient(app) as client:
+        yield client
+
+    app.dependency_overrides.clear()
+
+
+# Authenticated inactive user fixture
+@pytest.fixture
+def fake_current_user_inactive(test_session):
+    user = UserDep(
+        user_id=1,
+        username="testuser",
+        email=None,
+        full_name=None,
+        disabled=True,
+        is_superuser=False,
+        hashed_password="fakehashedpassword"
+    )
+
+    test_session.add(user)
+    test_session.commit()
+    test_session.refresh(user)
+
+    return user
+
+
+@pytest.fixture
+def inactive_user_token(fake_current_user_inactive):
+    return create_access_token(
+        data={"sub": str(fake_current_user_inactive.username)}
+    )
+
+
+@pytest.fixture
+def inactive_auth_headers(inactive_user_token):
+    return {"Authorization": f"Bearer {inactive_user_token}"}
+
+
+@pytest.fixture
+def authenticated_client_inactive(test_session):
+    def override_get_session():
+        yield test_session
+
     app.dependency_overrides[get_session] = override_get_session
 
     with TestClient(app) as client:
@@ -121,6 +183,16 @@ def authenticated_client(test_session, fake_current_user):
 
 @pytest.fixture
 def unauthenticated_client(test_session):
+    def override_get_session():
+        yield test_session
+
+    app.dependency_overrides[get_session] = override_get_session
+
+    with TestClient(app) as client:
+        yield client
+
+    app.dependency_overrides.clear()
+
     def override_get_session():
         yield test_session
 
