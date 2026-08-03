@@ -81,7 +81,7 @@ engine = create_engine(TEST_DATABASE_URL, poolclass=StaticPool)
 @dataclass
 class TestData:
     user: UserDep
-    lead: Lead
+    lead1: Lead
 
 
 #
@@ -241,7 +241,7 @@ def fake_current_user_with_data(test_session):
     test_session.commit()
     test_session.refresh(lead1)
 
-    return TestData(user=user, lead=lead1)
+    return TestData(user=user, lead1=lead1)
 
 
 @pytest.fixture
