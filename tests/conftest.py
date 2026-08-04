@@ -81,12 +81,12 @@ engine = create_engine(TEST_DATABASE_URL, poolclass=StaticPool)
 @dataclass
 class TestData:
     user: UserDep
-    lead1: Lead
+    leads: list[Lead]
 
 
-#
+# Fixture to create an isolated session with transaction rollback for each test
 @pytest.fixture
-def test_session():
+def create_test_session():
     connection = engine.connect()
     transaction = connection.begin()
 
@@ -99,9 +99,23 @@ def test_session():
     connection.close()
 
 
-# Authenticated active user fixture
+# Fixture to provide a TestClient with the overridden session for integration tests
 @pytest.fixture
-def fake_current_user(test_session):
+def testing_session(create_test_session):
+    def override_get_session():
+        yield create_test_session
+
+    app.dependency_overrides[get_session] = override_get_session
+
+    with TestClient(app) as client:
+        yield client
+
+    app.dependency_overrides.clear()
+
+
+# Fixture to create a user and add it to the test session
+@pytest.fixture
+def fake_current_user(create_test_session):
     user = UserDep(
         user_id=1,
         username="testuser",
@@ -112,109 +126,64 @@ def fake_current_user(test_session):
         hashed_password="fakehashedpassword"
     )
 
-    test_session.add(user)
-    test_session.commit()
-    test_session.refresh(user)
+    create_test_session.add(user)
+    create_test_session.commit()
+    create_test_session.refresh(user)
 
     return user
 
 
+# Fixtures to create authentication headers for different user states
 @pytest.fixture
-def active_user_token(fake_current_user):
-    return create_access_token(
-        data={"sub": str(fake_current_user.username)}
+def fake_authenticated_active_user_headers(fake_current_user):
+
+    user = fake_current_user
+
+    token = create_access_token(
+        data={"sub": str(user.username)}
     )
 
-
-@pytest.fixture
-def active_auth_headers(active_user_token):
-    return {"Authorization": f"Bearer {active_user_token}"}
+    return {"Authorization": f"Bearer {token}"}
 
 
 @pytest.fixture
-def authenticated_client(test_session):
-    def override_get_session():
-        yield test_session
+def fake_unauthenticated_inactive_user_headers(fake_current_user):
 
-    app.dependency_overrides[get_session] = override_get_session
+    user = fake_current_user
+    user.disabled = True
 
-    with TestClient(app) as client:
-        yield client
+    token = create_access_token(data={"sub": str(user.username)})
 
-    app.dependency_overrides.clear()
-
-
-# Authenticated inactive user fixture
-@pytest.fixture
-def fake_current_user_inactive(test_session):
-    user = UserDep(
-        user_id=1,
-        username="testuser",
-        email=None,
-        full_name=None,
-        disabled=True,
-        is_superuser=False,
-        hashed_password="fakehashedpassword"
-    )
-
-    test_session.add(user)
-    test_session.commit()
-    test_session.refresh(user)
-
-    return user
+    return {"Authorization": f"Bearer {token}"}
 
 
 @pytest.fixture
-def inactive_user_token(fake_current_user_inactive):
-    return create_access_token(
-        data={"sub": str(fake_current_user_inactive.username)}
-    )
+def fake_unauthenticated_user_headers():
+    return {"Authorization": f"Bearer invalidtoken"}
+
+
+# Fixture to create a fake user with data
+def create_leads(create_test_session, user, count):
+    leads = []
+    for i in range(count):
+        lead = Lead(
+            owner_id=user.user_id,
+            name=f"Test Lead {i + 1}",
+            company=f"Test Company {i + 1}",
+            email=f"test{i + 1}@example.com",
+            status=f"New lead {i + 1}"
+        )
+
+        create_test_session.add(lead)
+
+        leads.append(lead)
+
+    create_test_session.flush()
+    return leads
 
 
 @pytest.fixture
-def inactive_auth_headers(inactive_user_token):
-    return {"Authorization": f"Bearer {inactive_user_token}"}
-
-
-@pytest.fixture
-def authenticated_client_inactive(test_session):
-    def override_get_session():
-        yield test_session
-
-    app.dependency_overrides[get_session] = override_get_session
-
-    with TestClient(app) as client:
-        yield client
-
-    app.dependency_overrides.clear()
-
-
-@pytest.fixture
-def unauthenticated_client(test_session):
-    def override_get_session():
-        yield test_session
-
-    app.dependency_overrides[get_session] = override_get_session
-
-    with TestClient(app) as client:
-        yield client
-
-    app.dependency_overrides.clear()
-
-    def override_get_session():
-        yield test_session
-
-    app.dependency_overrides[get_session] = override_get_session
-
-    with TestClient(app) as client:
-        yield client
-
-    app.dependency_overrides.clear()
-
-
-# Fake user with data
-@pytest.fixture
-def fake_current_user_with_data(test_session):
+def fake_current_user_with_data(create_test_session):
     user = UserDep(
         user_id=1,
         username="testuser",
@@ -225,23 +194,41 @@ def fake_current_user_with_data(test_session):
         hashed_password="fakehashedpassword"
     )
 
-    test_session.add(user)
-    test_session.commit()
-    test_session.refresh(user)
+    create_test_session.add(user)
+    create_test_session.flush()
+    # create_test_session.refresh(user)
 
-    lead1 = Lead(
-        owner_id=user.user_id,
-        name="Test Lead 1",
-        company="Test Company 1",
-        email="test1@example.com",
-        status="new"
-    )
+    leads = create_leads(create_test_session, user, 10)
 
-    test_session.add(lead1)
-    test_session.commit()
-    test_session.refresh(lead1)
+    # leads = []
+    # for i in range(10):
+    #     lead = Lead(
+    #         owner_id=user.user_id,
+    #         name=f"Test Lead {i + 1}",
+    #         company=f"Test Company {i + 1}",
+    #         email=f"test{i + 1}@example.com"
+    #     )
 
-    return TestData(user=user, lead1=lead1)
+    #     create_test_session.add(lead)
+
+    #     leads.append(lead)
+
+    # create_test_session.commit()
+    # create_test_session.refresh(lead)
+
+    # lead1 = Lead(
+    #     owner_id=user.user_id,
+    #     name="Test Lead 1",
+    #     company="Test Company 1",
+    #     email="test1@example.com",
+    #     status="new"
+    # )
+
+    # create_test_session.add(lead1)
+    # create_test_session.commit()
+    # create_test_session.refresh(lead1)
+
+    return TestData(user=user, leads=leads)
 
 
 @pytest.fixture
