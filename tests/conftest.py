@@ -163,84 +163,86 @@ def fake_unauthenticated_user_headers():
 
 
 # Fixture to create a fake user with data
-def create_leads(create_test_session, user, count):
-    leads = []
-    for i in range(count):
-        lead = Lead(
-            owner_id=user.user_id,
-            name=f"Test Lead {i + 1}",
-            company=f"Test Company {i + 1}",
-            email=f"test{i + 1}@example.com",
-            status=f"New lead {i + 1}"
-        )
+# @pytest.fixture
+# def create_leads(create_test_session, user, count):
 
-        create_test_session.add(lead)
+#     leads = []
+#     for i in range(count):
+#         lead = Lead(
+#             owner_id=user.user_id,
+#             name=f"Test Lead {i + 1}",
+#             company=f"Test Company {i + 1}",
+#             email=f"test{i + 1}@example.com",
+#             status=f"New lead {i + 1}"
+#         )
 
-        leads.append(lead)
+#         create_test_session.add(lead)
 
-    create_test_session.flush()
-    return leads
+#         leads.append(lead)
 
-
-@pytest.fixture
-def fake_current_user_with_data(create_test_session):
-    user = UserDep(
-        user_id=1,
-        username="testuser",
-        email=None,
-        full_name=None,
-        disabled=False,
-        is_superuser=False,
-        hashed_password="fakehashedpassword"
-    )
-
-    create_test_session.add(user)
-    create_test_session.flush()
-    # create_test_session.refresh(user)
-
-    leads = create_leads(create_test_session, user, 10)
-
-    # leads = []
-    # for i in range(10):
-    #     lead = Lead(
-    #         owner_id=user.user_id,
-    #         name=f"Test Lead {i + 1}",
-    #         company=f"Test Company {i + 1}",
-    #         email=f"test{i + 1}@example.com"
-    #     )
-
-    #     create_test_session.add(lead)
-
-    #     leads.append(lead)
-
-    # create_test_session.commit()
-    # create_test_session.refresh(lead)
-
-    # lead1 = Lead(
-    #     owner_id=user.user_id,
-    #     name="Test Lead 1",
-    #     company="Test Company 1",
-    #     email="test1@example.com",
-    #     status="new"
-    # )
-
-    # create_test_session.add(lead1)
-    # create_test_session.commit()
-    # create_test_session.refresh(lead1)
-
-    return TestData(user=user, leads=leads)
+#     create_test_session.flush()
+#     return leads
 
 
-@pytest.fixture
-def active_user_token_with_data(fake_current_user_with_data):
+# @pytest.fixture
+# def fake_current_user_with_data(create_test_session):
+#     user = UserDep(
+#         user_id=1,
+#         username="testuser",
+#         email=None,
+#         full_name=None,
+#         disabled=False,
+#         is_superuser=False,
+#         hashed_password="fakehashedpassword"
+#     )
 
-    data = fake_current_user_with_data
+#     create_test_session.add(user)
+#     create_test_session.flush()
+#     # create_test_session.refresh(user)
 
-    return create_access_token(
-        data={"sub": str(data.user.username)}
-    )
+#     leads = create_leads(create_test_session, user, 10)
+
+#     # leads = []
+#     # for i in range(10):
+#     #     lead = Lead(
+#     #         owner_id=user.user_id,
+#     #         name=f"Test Lead {i + 1}",
+#     #         company=f"Test Company {i + 1}",
+#     #         email=f"test{i + 1}@example.com"
+#     #     )
+
+#     #     create_test_session.add(lead)
+
+#     #     leads.append(lead)
+
+#     # create_test_session.commit()
+#     # create_test_session.refresh(lead)
+
+#     # lead1 = Lead(
+#     #     owner_id=user.user_id,
+#     #     name="Test Lead 1",
+#     #     company="Test Company 1",
+#     #     email="test1@example.com",
+#     #     status="new"
+#     # )
+
+#     # create_test_session.add(lead1)
+#     # create_test_session.commit()
+#     # create_test_session.refresh(lead1)
+
+#     return TestData(user=user, leads=leads)
 
 
-@pytest.fixture
-def active_auth_headers_with_data(active_user_token_with_data):
-    return {"Authorization": f"Bearer {active_user_token_with_data}"}
+# @pytest.fixture
+# def active_user_token_with_data(fake_current_user_with_data):
+
+#     data = fake_current_user_with_data
+
+#     return create_access_token(
+#         data={"sub": str(data.user.username)}
+#     )
+
+
+# @pytest.fixture
+# def active_auth_headers_with_data(active_user_token_with_data):
+#     return {"Authorization": f"Bearer {active_user_token_with_data}"}

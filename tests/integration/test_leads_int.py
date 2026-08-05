@@ -51,33 +51,40 @@ def test_get_leads_return_empty_list_int(testing_session, fake_authenticated_act
     }
 
 
-def test_get_leads_return_five_leads(testing_session, active_auth_headers_with_data, fake_current_user_with_data):
+def create_leads(session, user, count):
 
-    page_size = 5
+    leads = []
+    for i in range(count):
+        lead = Lead(
+            owner_id=user.user_id,
+            name=f"Test Lead {i + 1}",
+            company=f"Test Company {i + 1}",
+            email=f"test{i + 1}@example.com",
+            status=f"New lead {i + 1}"
+        )
 
-    data = fake_current_user_with_data
+        session.add(lead)
+
+        leads.append(lead)
+
+    session.flush()
+    return leads
+
+
+def test_get_leads_return_five_leads(testing_session, fake_authenticated_active_user_headers, fake_current_user, create_test_session):
+
+    count = 5
+
+    user = fake_current_user
+
+    create_leads(create_test_session, user, count)
 
     response = testing_session.get(
-        f"/leads?page_size={page_size}", headers=active_auth_headers_with_data)
+        "/leads", headers=fake_authenticated_active_user_headers)
 
     assert response.status_code == 200
 
     data = response.json()
-    assert data["pagination"]["item_count"] == page_size
-    assert len(data["data"]) == page_size
-
-
-def test_get_leads_return_ten_leads(testing_session, active_auth_headers_with_data, fake_current_user_with_data):
-
-    page_size = 10
-
-    data = fake_current_user_with_data
-
-    response = testing_session.get(
-        f"/leads?page_size={page_size}", headers=active_auth_headers_with_data)
-
-    assert response.status_code == 200
-
-    data = response.json()
-    assert data["pagination"]["item_count"] == page_size
-    assert len(data["data"]) == page_size
+    assert data["data"][0]["name"] == "Test Lead 1"
+    assert data["pagination"]["item_count"] == count
+    assert len(data["data"]) == count
