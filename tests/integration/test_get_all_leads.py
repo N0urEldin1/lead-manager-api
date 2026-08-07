@@ -105,6 +105,84 @@ def test_get_leads_return_only_current_user_leads(testing_session, fake_authenti
     assert len(data["data"]) == count1
 
 
+def test_get_leads_with_name_filter_returns_correct_leads(testing_session, fake_authenticated_active_user_headers, fake_current_user, create_test_session):
+
+    count = 5
+
+    user = fake_current_user
+
+    create_leads(create_test_session, user, count)
+
+    response = testing_session.get(
+        "/leads?name=Test Lead 1", headers=fake_authenticated_active_user_headers)
+
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["data"][0]["name"] == "Test Lead 1"
+    assert data["pagination"]["item_count"] == 1
+    assert len(data["data"]) == 1
+
+
+def test_get_leads_with_company_filter_returns_correct_leads(testing_session, fake_authenticated_active_user_headers, fake_current_user, create_test_session):
+
+    count = 5
+
+    user = fake_current_user
+
+    create_leads(create_test_session, user, count)
+
+    response = testing_session.get(
+        "/leads?company=Test Company 1", headers=fake_authenticated_active_user_headers)
+
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["data"][0]["company"] == "Test Company 1"
+    assert data["pagination"]["item_count"] == 1
+    assert len(data["data"]) == 1
+
+
+def test_get_leads_with_status_filter_returns_correct_leads(testing_session, fake_authenticated_active_user_headers, fake_current_user, create_test_session):
+
+    count = 5
+
+    user = fake_current_user
+
+    create_leads(create_test_session, user, count)
+
+    response = testing_session.get(
+        "/leads?status=New lead 1", headers=fake_authenticated_active_user_headers)
+
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["data"][0]["status"] == "New lead 1"
+    assert data["pagination"]["item_count"] == 1
+    assert len(data["data"]) == 1
+
+
+def test_get_leads_with_multiple_filters_returns_correct_leads(testing_session, fake_authenticated_active_user_headers, fake_current_user, create_test_session):
+
+    count = 5
+
+    user = fake_current_user
+
+    create_leads(create_test_session, user, count)
+
+    response = testing_session.get(
+        "/leads?name=Test Lead 2&company=Test Company 2&status=New lead 2", headers=fake_authenticated_active_user_headers)
+
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["data"][0]["name"] == "Test Lead 2"
+    assert data["data"][0]["company"] == "Test Company 2"
+    assert data["data"][0]["status"] == "New lead 2"
+    assert data["pagination"]["item_count"] == 1
+    assert len(data["data"]) == 1
+
+
 def test_get_leads_pagination_returns_correct_next_page(testing_session, fake_authenticated_active_user_headers, fake_current_user, create_test_session):
 
     count = 10
