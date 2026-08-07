@@ -103,3 +103,61 @@ def test_get_leads_return_only_current_user_leads(testing_session, fake_authenti
 
     assert data["pagination"]["item_count"] == count1
     assert len(data["data"]) == count1
+
+
+def test_get_leads_pagination_returns_correct_next_page(testing_session, fake_authenticated_active_user_headers, fake_current_user, create_test_session):
+
+    count = 10
+
+    page = 1
+
+    page_size = 5
+
+    user = fake_current_user
+
+    create_leads(create_test_session, user, count)
+
+    response = testing_session.get(
+        f"/leads?page={page}&page_size={page_size}", headers=fake_authenticated_active_user_headers)
+
+    data = response.json()
+
+    assert response.status_code == 200
+
+    assert data["pagination"]["page"] == page
+    assert data["pagination"]["page_size"] == page_size
+
+    assert data["pagination"]["item_count"] == page_size
+    assert len(data["data"]) == page_size
+
+    assert data["next_page"] != None
+    assert data["previous_page"] == None
+
+
+def test_get_leads_pagination_returns_correct_previous_page(testing_session, fake_authenticated_active_user_headers, fake_current_user, create_test_session):
+
+    count = 10
+
+    page = 2
+
+    page_size = 5
+
+    user = fake_current_user
+
+    create_leads(create_test_session, user, count)
+
+    response = testing_session.get(
+        f"/leads?page={page}&page_size={page_size}", headers=fake_authenticated_active_user_headers)
+
+    data = response.json()
+
+    assert response.status_code == 200
+
+    assert data["pagination"]["page"] == page
+    assert data["pagination"]["page_size"] == page_size
+
+    assert data["pagination"]["item_count"] == page_size
+    assert len(data["data"]) == page_size
+
+    assert data["next_page"] == None
+    assert data["previous_page"] != None
