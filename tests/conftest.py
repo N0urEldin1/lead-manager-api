@@ -179,3 +179,23 @@ def second_fake_user(create_test_session):
     create_test_session.refresh(user)
 
     return user
+
+
+def create_leads(session, user, count):
+
+    leads = []
+    for i in range(count):
+        lead = Lead(
+            owner_id=user.user_id,
+            name=f"Test Lead {i + 1}",
+            company=f"Test Company {i + 1}",
+            email=f"test{i + 1}@example.com",
+            status=f"New lead {i + 1}"
+        )
+
+        session.add(lead)
+
+        leads.append(lead)
+
+    session.flush()
+    return leads
