@@ -26,7 +26,7 @@ def read_all(user, request, session, name, company, status, page, page_size):
     base_url = str(request.url).split("?")[0]
 
     # If the number of returned data is less then the page size asked for (meaning there's less data to return than asked for) don't return a url for next page
-    if page_size > len(data):
+    if page_size >= len(data):
         next_url = None
     else:
         next_url = f"{base_url}?page={page+1}&page_size={page_size}"
