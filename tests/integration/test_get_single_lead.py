@@ -80,3 +80,17 @@ def test_get_single_lead_unauthorized_returns_404_int(testing_session, fake_auth
         f"/leads/{leads_user2[0].lead_id}", headers=fake_authenticated_active_user_headers)
 
     assert response.status_code == 404
+
+
+def test_get_single_lead_invalid_id_returns_422_int(testing_session, fake_authenticated_active_user_headers, fake_current_user, create_test_session):
+
+    count = 1
+
+    user = fake_current_user
+
+    leads = create_leads(create_test_session, user, count)
+
+    response = testing_session.get(
+        f"/leads/invalid_id", headers=fake_authenticated_active_user_headers)
+
+    assert response.status_code == 422
