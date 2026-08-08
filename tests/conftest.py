@@ -13,6 +13,8 @@ from config import settings
 
 from dataclasses import dataclass
 
+from src.auth.security import get_password_hash
+
 
 @pytest.fixture
 def fake_session():
@@ -116,6 +118,11 @@ def testing_session(create_test_session):
 # Fixture to create a user and add it to the test session
 @pytest.fixture
 def fake_current_user(create_test_session):
+
+    password = "123456789"
+
+    hashed_password = get_password_hash(password)
+
     user = UserDep(
         user_id=1,
         username="testuser",
@@ -123,7 +130,7 @@ def fake_current_user(create_test_session):
         full_name=None,
         disabled=False,
         is_superuser=False,
-        hashed_password="fakehashedpassword"
+        hashed_password=hashed_password
     )
 
     create_test_session.add(user)
