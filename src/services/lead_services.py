@@ -20,7 +20,7 @@ def read_all(user, request, session, name, company, status, page, page_size):
     offset = (page - 1) * page_size
     # Fetch the matching data
     data = session.scalars(statement.order_by(
-        Lead.lead_id).offset(offset).limit(page_size)).all()
+        Lead.lead_id).offset(offset).limit(page_size + 1)).all()
 
     # Create a base url for creating the next and previous page urls
     base_url = str(request.url).split("?")[0]
@@ -38,11 +38,11 @@ def read_all(user, request, session, name, company, status, page, page_size):
         prev_url = None
 
     return {
-        "data": data,
+        "data": data[:page_size],
         "pagination": {
             "page": page,
             "page_size": page_size,
-            "item_count": len(data),
+            "item_count": len(data[:page_size]),
         },
         "next_page": next_url,
         "previous_page": prev_url
