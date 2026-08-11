@@ -169,6 +169,13 @@ def test_read_all_returns_correct_pagination_next_page_only():
             "email": "string",
             "status": "string",
             "lead_id": 1
+        },
+        {
+            "name": "string",
+            "company": "string",
+            "email": "string",
+            "status": "string",
+            "lead_id": 2
         }
     ]
 
@@ -199,7 +206,7 @@ def test_read_all_returns_correct_pagination_next_page_only():
         "pagination": {
             "page": 1,
             "page_size": 1,
-            "item_count": len(data)
+            "item_count": len(result["data"])
         },
         "next_page": f"http://test/leads?page=2&page_size=1",
         "previous_page": None
