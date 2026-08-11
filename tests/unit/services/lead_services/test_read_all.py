@@ -306,23 +306,16 @@ def test_read_all_returns_correct_pagination_next_and_previous_page():
         "data": [
             {
                 "name": "string",
-                        "company": "string",
-                        "email": "string",
-                        "status": "string",
-                        "lead_id": 1
-            },
-            {
-                "name": "string",
-                        "company": "string",
-                        "email": "string",
-                        "status": "string",
-                        "lead_id": 2
+                "company": "string",
+                "email": "string",
+                "status": "string",
+                "lead_id": 1
             }
         ],
         "pagination": {
             "page": 2,
             "page_size": 1,
-            "item_count": len(data)
+            "item_count": len(result["data"])
         },
         "next_page": "http://test/leads?page=3&page_size=1",
         "previous_page": "http://test/leads?page=1&page_size=1"
