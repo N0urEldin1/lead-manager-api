@@ -39,7 +39,7 @@ def test_get_user_from_db_returns_none():
     session = MagicMock()
     session.exec.return_value.first.return_value = None
 
-    result = get_user_from_db(user, session)
+    result = get_user_from_db(user.username, session)
 
     assert result is None
     session.exec.assert_called_once()
@@ -160,17 +160,16 @@ async def test_get_current_user_with_no_token():
     session = MagicMock()
     session.exec.return_value.first.return_value = user
 
-    with pytest.raises(HTTPException):
-        result = await get_current_user(token, session)
+    with pytest.raises(HTTPException) as excinfo:
+        await get_current_user(token, session)
 
-        assert result.status_code == 401
+    assert excinfo.value.status_code == 401
 
 
 @pytest.mark.asyncio
 async def test_get_current_user_with_invalid_token():
 
-    token = MagicMock()
-    token.return_value = "faketoken"
+    token = "faketoken"
 
     user = MagicMock()
     user.username = "user1"
@@ -178,28 +177,27 @@ async def test_get_current_user_with_invalid_token():
     session = MagicMock()
     session.exec.return_value.first.return_value = user
 
-    with pytest.raises(HTTPException):
-        result = await get_current_user(token, session)
+    with pytest.raises(HTTPException) as excinfo:
+        await get_current_user(token, session)
 
-        assert result.status_code == 401
+    assert excinfo.value.status_code == 401
 
 
 @pytest.mark.asyncio
 async def test_get_current_user_does_not_exist():
-
-    token = MagicMock()
-    token.return_value = "faketoken"
-
-    user = MagicMock()
-    user.username = None
+    # Simulate a valid token but the DB lookup returns None
+    valid_token = create_access_token({"sub": "user1"})
 
     session = MagicMock()
-    session.exec.return_value.first.return_value = user
+    # Patch the DB lookup via the get_user_from_db function to return None
+    # so get_current_user will raise
+    # We'll monkeypatch at call time using the real session behavior
+    session.exec.return_value.first.return_value = None
 
-    with pytest.raises(HTTPException):
-        result = await get_current_user(token, session)
+    with pytest.raises(HTTPException) as excinfo:
+        await get_current_user(valid_token, session)
 
-        assert result.status_code == 401
+    assert excinfo.value.status_code == 401
 
 
 @pytest.mark.asyncio
@@ -241,20 +239,12 @@ async def test_get_current_user_returns_user(mocker):
 async def test_get_current_active_user_disabled_returns_400():
 
     current_user = MagicMock()
-    current_user.return_value = {
-        "email": None,
-        "full_name": None,
-        "disabled": True,
-        "hashed_password": "fakehashedpassword",
-        "username": "user1",
-        "user_id": 1,
-        "is_superuser": None
-    }
+    current_user.disabled = True
 
-    with pytest.raises(HTTPException):
-        result = await get_current_active_user(current_user)
+    with pytest.raises(HTTPException) as excinfo:
+        await get_current_active_user(current_user)
 
-        assert result.status_code == 400
+    assert excinfo.value.status_code == 400
 
 
 @pytest.mark.asyncio
