@@ -1,11 +1,6 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
-from fastapi import HTTPException
-import pytest
-from sqlmodel import select
-
-from src.models.lead import Lead, LeadCreate
-from src.services.lead_services import read_all, read, create, delete, update
+from src.services.lead_services import create
 
 
 # create
@@ -24,11 +19,8 @@ def test_create_creates_new_lead():
 
     result = create(user, lead, session)
 
-    session.add.assert_called_once()
-    session.commit.assert_called_once()
-    session.refresh.assert_called_once()
-
     session.add.assert_called_once_with(result)
+    session.commit.assert_called_once()
     session.refresh.assert_called_once_with(result)
 
     assert result.owner_id == user.user_id
