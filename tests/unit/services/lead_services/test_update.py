@@ -1,11 +1,10 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 from fastapi import HTTPException
 import pytest
-from sqlmodel import select
 
-from src.models.lead import Lead, LeadCreate
-from src.services.lead_services import read_all, read, create, delete, update
+from src.models.lead import Lead
+from src.services.lead_services import update
 
 
 # update
@@ -57,7 +56,7 @@ def test_update_raises_404_when_lead_not_found():
     session = MagicMock()
     session.scalars.return_value.first.return_value = None
 
-    with pytest.raises(HTTPException):
+    with pytest.raises(HTTPException) as excinfo:
         update(
             user=user,
             lead_id=1,
@@ -68,3 +67,4 @@ def test_update_raises_404_when_lead_not_found():
     session.add.assert_not_called()
     session.commit.assert_not_called()
     session.refresh.assert_not_called()
+    assert excinfo.value.status_code == 404

@@ -1,11 +1,9 @@
 from datetime import timedelta
-from types import SimpleNamespace
-from unittest import result
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 from fastapi import HTTPException
 import pytest
-from sqlmodel import select
+
 
 from src.models.user import UserRegister
 from src.services.user_services import login, register
@@ -50,18 +48,19 @@ def test_login_failure_raises_http_exception(mocker):
     form_data.password = "wrong"
 
     mock_auth = mocker.patch("src.services.user_services.authenticate_user")
-    mock_auth.return_value = MagicMock(None)
+    mock_auth.return_value = None
 
     mock_token = mocker.patch("src.services.user_services.create_access_token")
     mock_token.side_effect = HTTPException(status_code=401)
 
-    with pytest.raises(HTTPException):
-        result = login(form_data, session)
+    with pytest.raises(HTTPException) as excinfo:
+        login(form_data, session)
 
-        mock_auth.assert_called_once_with(
-            form_data.username, form_data.password, session)
-        mock_token.assert_called_once()
-        assert result.status_code == 401
+    mock_auth.assert_called_once_with(
+        form_data.username, form_data.password, session)
+    # authenticate_user returned None, so create_access_token should not be called
+    mock_token.assert_not_called()
+    assert excinfo.value.status_code == 401
 
 
 # register
@@ -126,15 +125,15 @@ def test_register_existing_user_raises_http_exception(mocker):
     mock_hash = mocker.patch("src.services.user_services.get_password_hash")
     mock_token = mocker.patch("src.services.user_services.create_access_token")
 
-    with pytest.raises(HTTPException):
-        result = register(user, session)
+    with pytest.raises(HTTPException) as excinfo:
+        register(user, session)
 
-        mock_get_user.assert_called_once_with(user.username, session)
+    mock_get_user.assert_called_once_with(user.username, session)
 
-        session.add.assert_not_called()
-        session.commit.assert_not_called()
-        session.refresh.assert_not_called()
-        mock_hash.assert_not_called()
-        mock_token.assert_not_called()
+    session.add.assert_not_called()
+    session.commit.assert_not_called()
+    session.refresh.assert_not_called()
+    mock_hash.assert_not_called()
+    mock_token.assert_not_called()
 
-        assert result.status_code == 400
+    assert excinfo.value.status_code == 400

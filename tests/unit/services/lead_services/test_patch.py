@@ -55,15 +55,15 @@ def test_patch_raises_404_when_lead_not_found():
     session = MagicMock()
     session.scalars.return_value.first.return_value = None
 
-    with pytest.raises(HTTPException):
-        result = patch(
+    with pytest.raises(HTTPException) as excinfo:
+        patch(
             user=user,
             lead_id=1,
             lead=MagicMock(),
             session=session
         )
 
-        assert result.status_code == 404
+    assert excinfo.value.status_code == 404
 
     session.add.assert_not_called()
     session.commit.assert_not_called()

@@ -1,11 +1,9 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 from fastapi import HTTPException
 import pytest
-from sqlmodel import select
 
-from src.models.lead import Lead, LeadCreate
-from src.services.lead_services import read_all, read, create, delete, update
+from src.services.lead_services import read
 
 
 # read
@@ -42,11 +40,11 @@ def test_read_returns_none_when_not_found():
     session = MagicMock()
     session.scalars.return_value.first.return_value = None
 
-    with pytest.raises(HTTPException):
-        result = read(
+    with pytest.raises(HTTPException) as excinfo:
+        read(
             user=user,
             session=session,
             lead_id=1
         )
 
-        assert result.status_code == 404
+    assert excinfo.value.status_code == 404
